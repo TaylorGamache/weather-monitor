@@ -1,0 +1,170 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "title": "Weather Monitor API",
+        "description": "Weather Monitoring Service",
+        "version": "1.0.0"
+    },
+    "host": "localhost:3000",
+    "schemes": [
+        "https"
+    ],
+    "basePath": "/api/v1",
+    "produces": [
+        "application/json"
+    ],
+    "paths": {
+        "/timers": {
+            "post": {
+              "summary": "Add/Update a timer",
+              "description": "This endpoint is used to add a timer for Date & Time monitoring service",
+                "parameters": [
+                    {
+                        "name": "timer",
+                        "in": "body",
+                        "description": "Timer JSON to be created",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/Timer"
+                        }
+                    }
+                ],
+                "tags": [
+                    "Timer"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success message",
+                        "schema": {
+                            "$ref": "#/definitions/Success"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/timers/:recipeid": {
+            "delete": {
+                "summary": "Delete a timer",
+                "description": "This endpoint deletes a timer matching the recipeID",
+                "parameters": [
+                    {
+                        "name": "recipeID",
+                        "in": "path",
+                        "description": "Unique identifier of a recipe/timer",
+                        "required": true,
+                        "type": "string"
+                    }
+                ],
+                "tags": [
+                    "Timer"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success message",
+                        "schema": {
+                            "$ref": "#/definitions/Success"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "Timer": {
+            "properties": {
+                "recipeID": {
+                    "type": "string",
+                    "description": "Unique identifier representing a specific recipe/timer"
+                },
+                "callbackURL": {
+                    "type": "string",
+                    "description": "Callback URL to call when scheduled time is up"
+                },
+                "trigger": {
+                    "description": "List of trigger specifications",
+                    "$ref": "#/definitions/Trigger"
+                }
+            }
+        },
+        "Trigger": {
+            "properties": {
+                "numWatch": {
+                    "type": "integer",
+                    "description": "Value to watch for if the relations calls for it."
+                },
+				"weather":{
+					"type": "string",
+					"description": "Only used in relation currentWeather and its the type of weather to watch for. Use either snow, rain, cloudy, or clear."
+				},
+				"numSystem": {
+                    "type": "string",
+                    "description": "To determine either US Standard(use US) or Metric(use M)."
+                },
+                "lon": {
+                    "type": "integer",
+                    "description": "Longitude of location",
+					"required": true
+                },
+				"lat": {
+                    "type": "integer",
+                    "description": "Latitude of location",
+					"required": true
+                },
+                "relation": {
+                    "type": "string",
+                    "description": "Type of weather trigger (tempGT, tempLT, Alert, currentWeather, weatherChange, curForecast, tomForecast, todHumid, todWind, todUV, tomLtemp, tomHtemp, todSunrise, todSunset)",
+					"required": true
+                },
+				"prevCond": {
+                    "type": "string",
+                    "description": "Only used in relations weatherChange and Alert. Used to limit the amount of times the recipe can trigger."
+                },
+				"inThreshold": {
+					"type": "boolean",
+					"description": "Always set to false. Used for limiting the amount of times a recipe can trigger."
+				}
+            }
+        },
+
+        "Success": {
+            "properties": {
+                "success": {
+                    "type": "boolean",
+                    "description": "Whether the request was successful or not"
+                },
+                "msg": {
+                    "type": "string",
+                    "description": "Success or error message"
+                },
+                "timer": {
+                    "description": "Timer object returned",
+                    "$ref": "#/definitions/Timer"
+                }
+            }
+        },
+        "Error": {
+            "properties": {
+                "success": {
+                    "type": "boolean"
+                },
+                "msg": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}
+
+
