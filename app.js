@@ -153,7 +153,15 @@ app.get('/MakeAndWatchDemo', function(req, res) {
 	})
 });
 
-app.post('/api/v1/timers', function(req, res){
+// Check for appropriate values
+// seperate endpoints for each trigger
+// ingrediants look into 
+// email digest loook into
+/*
+btw, something I forgot to bring up, I noticed there are cloudant password and api keys exposed publicly on github
+you should move this information to a config module, and gitignore this file. Then you can include the config module to use in app.js
+*/
+app.post('/api/v1/weather', function(req, res){
 	console.log("recipes was hit")
 	/**
 	1.) Store recipe in DB and return response

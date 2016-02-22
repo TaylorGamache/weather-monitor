@@ -7,30 +7,30 @@
     },
     "host": "localhost:3000",
     "schemes": [
-        "https"
+        "http"
     ],
     "basePath": "/api/v1",
     "produces": [
         "application/json"
     ],
     "paths": {
-        "/timers": {
+        "/weather": {
             "post": {
-              "summary": "Add/Update a timer",
-              "description": "This endpoint is used to add a timer for Date & Time monitoring service",
+              "summary": "Add/Update a weather trigger",
+              "description": "This endpoint is used to add a weather trigger for the weather monitoring service",
                 "parameters": [
                     {
-                        "name": "timer",
+                        "name": "weather trigger",
                         "in": "body",
-                        "description": "Timer JSON to be created",
+                        "description": "weather trigger JSON to be created",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/Timer"
+                            "$ref": "#/definitions/Weather"
                         }
                     }
                 ],
                 "tags": [
-                    "Timer"
+                    "Weather"
                 ],
                 "responses": {
                     "200": {
@@ -48,21 +48,21 @@
                 }
             }
         },
-        "/timers/:recipeid": {
+        "/weather/:recipeid": {
             "delete": {
-                "summary": "Delete a timer",
-                "description": "This endpoint deletes a timer matching the recipeID",
+                "summary": "Delete a weather trigger",
+                "description": "This endpoint deletes a weather trigger matching the recipeID",
                 "parameters": [
                     {
                         "name": "recipeID",
                         "in": "path",
-                        "description": "Unique identifier of a recipe/timer",
+                        "description": "Unique identifier of a recipe/weather trigger",
                         "required": true,
                         "type": "string"
                     }
                 ],
                 "tags": [
-                    "Timer"
+                    "Weather"
                 ],
                 "responses": {
                     "200": {
@@ -82,11 +82,11 @@
         }
     },
     "definitions": {
-        "Timer": {
+        "Weather": {
             "properties": {
                 "recipeID": {
                     "type": "string",
-                    "description": "Unique identifier representing a specific recipe/timer"
+                    "description": "Unique identifier representing a specific recipe/weather trigger"
                 },
                 "callbackURL": {
                     "type": "string",
@@ -148,9 +148,9 @@
                     "type": "string",
                     "description": "Success or error message"
                 },
-                "timer": {
-                    "description": "Timer object returned",
-                    "$ref": "#/definitions/Timer"
+                "weather": {
+                    "description": "Weather object returned",
+                    "$ref": "#/definitions/Weather"
                 }
             }
         },
