@@ -31,7 +31,6 @@ app.use(bodyParser.json());
 app.use(express.static(__dirname + '/public'));
 
 // Check for appropriate values
-// seperate endpoints for each trigger
 // ingrediants look into 
 // email digest loook into
 
@@ -49,7 +48,7 @@ app.post('/api/v1/weather/*', function(req, res){
 			res.send("Error adding recipe.");
 		}else{
 			var idNum = body.id;
-			res.json({success: true, msg: 'Successfully added the weather monitor.'});
+			res.json({success: true, msg: 'Successfully added the weather recipe to database.'});
 			var relation = request.trigger.relation;
 			//sets up if recipe is calling for temperature monitoring
 			if (relation == "tempLT" || relation == "tempGT" || relation=="EQ") {
@@ -196,7 +195,9 @@ function watchTemperature(recipeIDNum){
 					}
 					// Does the appropriate comparison depending on the relation and stores a boolean
 					// value in noise
+					console.log("The watch temperature value: "+targetTemp);
 					if (relation == "tempLT") {
+						console.log("Relation: less than");
 						// does LT relation
 						if(currentTemp < targetTemp){
 							if(thresh == false) {
@@ -210,7 +211,7 @@ function watchTemperature(recipeIDNum){
 								// calls callback url
 								console.log("Target hit, calling callback URL...");
 								callback += recipeIDNum;
-								request(callback, function(err, response, body){
+								/*request(callback, function(err, response, body){
 									if(!err){
 										console.log("successfully sent trigger, response body:");
 										console.log(body);
@@ -218,7 +219,7 @@ function watchTemperature(recipeIDNum){
 										console.log(response);
 										throw err;
 									}
-								});
+								});*/
 							}
 						} else if(thresh == true) {
 							// if thresh = true than if temp difference is > 3 than threshold = false
@@ -234,7 +235,7 @@ function watchTemperature(recipeIDNum){
 						}
 					} else if (relation == "tempGT") {
 						// does GT relation
-						//console.log("");
+						console.log("Relation: greater than");
 						if(currentTemp > targetTemp){
 							if(thresh == false) {
 								// changes threshold value to true
@@ -247,7 +248,7 @@ function watchTemperature(recipeIDNum){
 								// calls callback url
 								console.log("Target hit, calling callback URL...");
 								callback += recipeIDNum;
-								request(callback, function(err, response, body){
+								/*request(callback, function(err, response, body){
 									if(!err){
 										console.log("successfully sent trigger, response body:");
 										console.log(body);
@@ -255,7 +256,7 @@ function watchTemperature(recipeIDNum){
 										console.log(response);
 										throw err;
 									}
-								});
+								});*/
 							}
 						} else if(thresh == true) {
 							// if thresh = true than if temp difference is > 3 than threshold = false
@@ -334,12 +335,12 @@ function watchAlert(recipeIDNum){
 					// Gets the current alert description from response
 					var parsedbody = JSON.parse(body);
 					var currentAlert = parsedbody.alerts.description;
-					//console.log("current weather alerts: " + currentAlert);
+					console.log("current weather alerts: " + currentAlert);
 					if (currentAlert === undefined) {
 						//Do nothing if there is no alert description (meaning no alert)
 						if (thresh != "none") {
 							// changes threshold value to undefined
-							data.trigger.inThreshold = "none";
+							data.trigger.prevCond = "none";
 							recipesDB.insert(data, recipeIDNum, function(err, body, header){
 								if(err){
 									res.send("Error adding recipe.");
@@ -350,7 +351,7 @@ function watchAlert(recipeIDNum){
 					// if past alert is not the same as current alert set off trigger
 						if ( thresh != currentAlert ) {
 							//store new alert in json
-							data.trigger.inThreshold = currentAlert;
+							data.trigger.prevCond = currentAlert;
 							recipesDB.insert(data, recipeIDNum, function(err, body, header){
 								if(err){
 									res.send("Error adding recipe.");
@@ -359,7 +360,7 @@ function watchAlert(recipeIDNum){
 							// sets off trigger
 							console.log("Target hit, calling callback URL...");
 							callback += recipeIDNum;
-							request(callback, function(err, response, body){
+							/*request(callback, function(err, response, body){
 								if(!err){
 									console.log("successfully sent trigger, response body:");
 									console.log(body);
@@ -367,7 +368,7 @@ function watchAlert(recipeIDNum){
 									console.log(response);
 									throw err;
 								}
-							});
+							});*/
 						}
 					}
 				}else{
@@ -442,7 +443,7 @@ function watchCurWeather(recipeIDNum) {
 							//calls callback url
 							console.log("Target hit, calling callback URL...");
 							callback += recipeIDNum;
-							request(callback, function(err, response, body){
+							/*request(callback, function(err, response, body){
 								if(!err){
 									console.log("successfully sent trigger, response body:");
 									console.log(body);
@@ -450,7 +451,7 @@ function watchCurWeather(recipeIDNum) {
 									console.log(response);
 									throw err;
 									}
-							});
+							});*/
 						}
 					} else if (thresh == true){
 						// changes threshold value to false
@@ -506,11 +507,12 @@ function watchWeather(recipeIDNum) {
 					// Gets the current alerts from response
 					var parsedbody = JSON.parse(body);
 					var curWeather = parsedbody.current_observation.weather;
+					console.log("Current weather: " + curWeather + ", Previous weather conditions: "+thresh);
 					
 					// if the current weather is different from the past weather set off trigger
 					if ( curWeather != thresh)  {
 						//update threshold with current weather for next check
-						data.trigger.inThreshold = curWeather;
+						data.trigger.prevCond = curWeather;
 						recipesDB.insert(data, recipeIDNum, function(err, body, header){
 							if(err){
 								res.send("Error adding recipe.");
@@ -518,7 +520,7 @@ function watchWeather(recipeIDNum) {
 						});
 						console.log("Target hit, calling callback URL...");
 						callback += recipeIDNum;
-						request(callback, function(err, response, body){
+						/*request(callback, function(err, response, body){
 							if(!err){
 								console.log("successfully sent trigger, response body:");
 								console.log(body);
@@ -526,7 +528,7 @@ function watchWeather(recipeIDNum) {
 								console.log(response);
 								throw err;
 							}
-						});
+						});*/
 					} 
 				} else {
 					console.log(response);
@@ -564,8 +566,6 @@ function todaysWeather(recipeIDNum) {
 			requestURL = "http://api.wunderground.com/api/"
 			requestURL += weatherAPIKey + "/forecast10day/q/"
 			requestURL += coord + ".json";
-			console.log("request URL:")
-			console.log(requestURL);
 
 			// sends the request to the weather api and parses through the response 
 			// for the wanted information and does the comparison
@@ -583,7 +583,7 @@ function todaysWeather(recipeIDNum) {
 					console.log(curWeather);
 					console.log("Target hit, calling callback URL...");
 					callback += recipeIDNum;
-					request(callback, function(err, response, body){
+					/*request(callback, function(err, response, body){
 						if(!err){
 							console.log("successfully sent trigger, response body:");
 							console.log(body);
@@ -591,7 +591,7 @@ function todaysWeather(recipeIDNum) {
 							console.log(response);
 							throw err;
 						}
-					});
+					});*/
 				} else {
 					console.log("ERROR:");
 					console.log(response);
@@ -647,7 +647,7 @@ function tomWeather(recipeIDNum) {
 					console.log(tomWeather);
 					console.log("Target hit, calling callback URL...");
 					callback += recipeIDNum;
-					request(callback, function(err, response, body){
+					/*request(callback, function(err, response, body){
 						if(!err){
 							console.log("successfully sent trigger, response body:");
 							console.log(body);
@@ -655,7 +655,7 @@ function tomWeather(recipeIDNum) {
 							console.log(response);
 							throw err;
 						}
-					});
+					});*/
 				} else {
 					console.log(response);
 					throw err;
@@ -707,11 +707,12 @@ function tomHighTemp(recipeIDNum) {
 					} else {
 						tomHigh = parsedbody.forecast.simpleforecast.forecastday[1].high.celsius;
 					}
+					console.log("Is tomorrows high temp of "+tomHigh+" greater than "+temp);
 					// If tomorrows High > x than set off trigger
 					if (temp < tomHigh) {
 						console.log("Target hit, calling callback URL...");
 						callback += recipeIDNum;
-						request(callback, function(err, response, body){
+						/*request(callback, function(err, response, body){
 							if(!err){
 								console.log("successfully sent trigger, response body:");
 								console.log(body);
@@ -719,7 +720,7 @@ function tomHighTemp(recipeIDNum) {
 								console.log(response);
 								throw err;
 							}
-						});
+						});*/
 					}
 				} else {
 					console.log(response);
@@ -772,11 +773,12 @@ function tomLowTemp(recipeIDNum) {
 					} else {
 						tomLow = parsedbody.forecast.simpleforecast.forecastday[1].low.celsius;
 					}
+					console.log("Is tomorrows low temp of "+tomLow+" less than "+temp);
 					// If tomorrows Low < x than set off trigger
 					if (temp > tomLow) {
 						console.log("Target hit, calling callback URL...");
 						callback += recipeIDNum;
-						request(callback, function(err, response, body){
+						/*request(callback, function(err, response, body){
 							if(!err){
 								console.log("successfully sent trigger, response body:");
 								console.log(body);
@@ -784,7 +786,7 @@ function tomLowTemp(recipeIDNum) {
 								console.log(response);
 								throw err;
 							}
-						});
+						});*/
 					}
 				} else {
 					console.log(response);
@@ -838,11 +840,12 @@ function todayWind(recipeIDNum) {
 						maxWind = parsedbody.forecast.simpleforecast.forecastday[1].maxwind.kph;
 					}
 					//direction is "".maxwind.dir if needed;
+					console.log("Is tomorrows wind speed of "+maxWind+" greater than "+windSpeed);
 					// If tomorrows Low < x than set off trigger
 					if (maxWind > windSpeed) {
 						console.log("Target hit, calling callback URL...");
 						callback += recipeIDNum;
-						request(callback, function(err, response, body){
+						/*request(callback, function(err, response, body){
 							if(!err){
 								console.log("successfully sent trigger, response body:");
 								console.log(body);
@@ -850,7 +853,7 @@ function todayWind(recipeIDNum) {
 								console.log(response);
 								throw err;
 							}
-						});
+						});*/
 					}
 				} else {
 					console.log(response);
@@ -897,12 +900,12 @@ function todayHumid(recipeIDNum) {
 					// Gets tomorrows weather forecast
 					var parsedbody = JSON.parse(body);
 					var maxHumid = parsedbody.forecast.simpleforecast.forecastday[1].maxhumidity;
-					//var tomLow = parsedbody.forecast.simpleforecast.forecastday[1].maxwind.mph;
 					// If tomorrows Low < x than set off trigger
+					console.log("Is tomorrows humidity of "+maxHumid+" greater than "+humid);
 					if (maxHumid > humid) {
 						console.log("Target hit, calling callback URL...");
 						callback += recipeIDNum;
-						request(callback, function(err, response, body){
+						/*request(callback, function(err, response, body){
 							if(!err){
 								console.log("successfully sent trigger, response body:");
 								console.log(body);
@@ -910,7 +913,7 @@ function todayHumid(recipeIDNum) {
 								console.log(response);
 								throw err;
 							}
-						});
+						});*/
 					}
 				} else {
 					console.log(response);
@@ -958,11 +961,11 @@ function todayUV(recipeIDNum) {
 					var parsedbody = JSON.parse(body);
 					var curUV = parsedbody.current_observation.UV;
 					// If tomorrows Low < x than set off trigger
-					console.log(curUV);
+					console.log("Is tomorrows UV of "+curUV+" greater than "+uv);
 					if (curUV > uv) {
 						console.log("Target hit, calling callback URL...");
 						callback += recipeIDNum;
-						request(callback, function(err, response, body){
+						/*request(callback, function(err, response, body){
 							if(!err){
 								console.log("successfully sent trigger, response body:");
 								console.log(body);
@@ -970,7 +973,7 @@ function todayUV(recipeIDNum) {
 								console.log(response);
 								throw err;
 							}
-						});
+						});*/
 					}
 				} else {
 					console.log(response);
@@ -1020,13 +1023,15 @@ function todaySun(recipeIDNum) {
 					if ("todSunrise" == relation) {
 						todaySunHour = parsedbody.moon_phase.sunrise.hour;
 						todaySunMin = parsedbody.moon_phase.sunrise.minute;
+						console.log("Todays sunrise wil be at "+todaySunHour+":"+todaySunMin);
 					} else {
 						todaySunHour = parsedbody.moon_phase.sunset.hour;
 						todaySunMin = parsedbody.moon_phase.sunset.minute;
+						console.log("Todays sunset wil be at "+todaySunHour+":"+todaySunMin);
 					}
 					console.log("Target hit, calling callback URL...");
 					callback += recipeIDNum;
-					request(callback, function(err, response, body){
+					/*request(callback, function(err, response, body){
 						if(!err){
 							console.log("successfully sent trigger, response body:");
 							console.log(body);
@@ -1034,7 +1039,7 @@ function todaySun(recipeIDNum) {
 							console.log(response);
 							throw err;
 						}
-					});
+					});*/
 				} else {
 					console.log(response);
 					throw err;

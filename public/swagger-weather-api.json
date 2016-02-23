@@ -5,7 +5,7 @@
         "description": "Weather Monitoring Service",
         "version": "1.0.0"
     },
-    "host": "localhost:3000",
+    "host": "http://localhost:3000",
     "schemes": [
         "http"
     ],
@@ -542,7 +542,7 @@
         },
         "Trigger": {
             "properties": {
-                "numWatch": {
+                "watchNum": {
                     "type": "integer",
                     "description": "Value to watch for."
                 },
@@ -589,7 +589,7 @@
         },
         "ltTrigger": {
             "properties": {
-                "numWatch": {
+                "watchNum": {
                     "type": "integer",
                     "description": "Value to watch for."
                 },
@@ -835,7 +835,7 @@
         },
         "thTrigger": {
             "properties": {
-                "numWatch": {
+                "watchNum": {
                     "type": "integer",
                     "description": "Value to watch for."
                 },
@@ -874,7 +874,7 @@
         },
         "twTrigger": {
             "properties": {
-                "numWatch": {
+                "watchNum": {
                     "type": "integer",
                     "description": "Value to watch for."
                 },
@@ -917,7 +917,7 @@
         },
         "tuvTrigger": {
             "properties": {
-                "numWatch": {
+                "watchNum": {
                     "type": "integer",
                     "description": "Value to watch for."
                 },
@@ -956,7 +956,7 @@
         },
         "tltTrigger": {
             "properties": {
-                "numWatch": {
+                "watchNum": {
                     "type": "integer",
                     "description": "Value to watch for."
                 },
@@ -999,7 +999,7 @@
         },
         "thtTrigger": {
             "properties": {
-                "numWatch": {
+                "watchNum": {
                     "type": "integer",
                     "description": "Value to watch for."
                 },
