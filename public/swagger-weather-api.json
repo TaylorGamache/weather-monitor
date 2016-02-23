@@ -14,9 +14,9 @@
         "application/json"
     ],
     "paths": {
-        "/weather": {
+        "/weather/temperatureGT": {
             "post": {
-              "summary": "Add/Update a weather trigger",
+              "summary": "Add/Update a weather trigger that monitors if the temperature will go above a value",
               "description": "This endpoint is used to add a weather trigger for the weather monitoring service",
                 "parameters": [
                     {
@@ -26,6 +26,448 @@
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/Weather"
+                        }
+                    }
+                ],
+                "tags": [
+                    "Weather"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success message",
+                        "schema": {
+                            "$ref": "#/definitions/Success"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+		"/weather/temperatureLT": {
+            "post": {
+              "summary": "Add/Update a weather trigger that monitors if the temperature will go below a value",
+              "description": "This endpoint is used to add a weather trigger for the weather monitoring service",
+                "parameters": [
+                    {
+                        "name": "weather trigger",
+                        "in": "body",
+                        "description": "weather trigger JSON to be created",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/ltWeather"
+                        }
+                    }
+                ],
+                "tags": [
+                    "Weather"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success message",
+                        "schema": {
+                            "$ref": "#/definitions/Success"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+		"/weather/alert": {
+            "post": {
+              "summary": "Add/Update a weather trigger that monitors if there is a weather alert",
+              "description": "This endpoint is used to add a weather trigger for the weather monitoring service",
+                "parameters": [
+                    {
+                        "name": "weather trigger",
+                        "in": "body",
+                        "description": "weather trigger JSON to be created",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/aWeather"
+                        }
+                    }
+                ],
+                "tags": [
+                    "Weather"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success message",
+                        "schema": {
+                            "$ref": "#/definitions/Success"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+		"/weather/specificWeather": {
+            "post": {
+              "summary": "Add/Update a weather trigger that monitors if the current weather is a certain type",
+              "description": "This endpoint is used to add a weather trigger for the weather monitoring service",
+                "parameters": [
+                    {
+                        "name": "weather trigger",
+                        "in": "body",
+                        "description": "weather trigger JSON to be created",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/cswWeather"
+                        }
+                    }
+                ],
+                "tags": [
+                    "Weather"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success message",
+                        "schema": {
+                            "$ref": "#/definitions/Success"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+		"/weather/weatherChange": {
+            "post": {
+              "summary": "Add/Update a weather trigger that monitors if the current weather conditions have changed",
+              "description": "This endpoint is used to add a weather trigger for the weather monitoring service",
+                "parameters": [
+                    {
+                        "name": "weather trigger",
+                        "in": "body",
+                        "description": "weather trigger JSON to be created",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/wcWeather"
+                        }
+                    }
+                ],
+                "tags": [
+                    "Weather"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success message",
+                        "schema": {
+                            "$ref": "#/definitions/Success"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+		"/weather/currentForecast": {
+            "post": {
+              "summary": "Add/Update a weather trigger that gets todays forecast",
+              "description": "This endpoint is used to add a weather trigger for the weather monitoring service",
+                "parameters": [
+                    {
+                        "name": "weather trigger",
+                        "in": "body",
+                        "description": "weather trigger JSON to be created",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/cfWeather"
+                        }
+                    }
+                ],
+                "tags": [
+                    "Weather"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success message",
+                        "schema": {
+                            "$ref": "#/definitions/Success"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+		"/weather/tomorrowForecast": {
+            "post": {
+              "summary": "Add/Update a weather trigger that gets tomorrows forecast",
+              "description": "This endpoint is used to add a weather trigger for the weather monitoring service",
+                "parameters": [
+                    {
+                        "name": "weather trigger",
+                        "in": "body",
+                        "description": "weather trigger JSON to be created",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/tfWeather"
+                        }
+                    }
+                ],
+                "tags": [
+                    "Weather"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success message",
+                        "schema": {
+                            "$ref": "#/definitions/Success"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+		"/weather/todayHumidity": {
+            "post": {
+              "summary": "Add/Update a weather trigger that monitors if today's humidity will go above a value",
+              "description": "This endpoint is used to add a weather trigger for the weather monitoring service",
+                "parameters": [
+                    {
+                        "name": "weather trigger",
+                        "in": "body",
+                        "description": "weather trigger JSON to be created",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/thWeather"
+                        }
+                    }
+                ],
+                "tags": [
+                    "Weather"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success message",
+                        "schema": {
+                            "$ref": "#/definitions/Success"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+		"/weather/todayWind": {
+            "post": {
+              "summary": "Add/Update a weather trigger that monitors if today's wind will go above a value",
+              "description": "This endpoint is used to add a weather trigger for the weather monitoring service",
+                "parameters": [
+                    {
+                        "name": "weather trigger",
+                        "in": "body",
+                        "description": "weather trigger JSON to be created",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/twWeather"
+                        }
+                    }
+                ],
+                "tags": [
+                    "Weather"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success message",
+                        "schema": {
+                            "$ref": "#/definitions/Success"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+		"/weather/todayUV": {
+            "post": {
+              "summary": "Add/Update a weather trigger that monitors if today's UV will go above a value",
+              "description": "This endpoint is used to add a weather trigger for the weather monitoring service",
+                "parameters": [
+                    {
+                        "name": "weather trigger",
+                        "in": "body",
+                        "description": "weather trigger JSON to be created",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/tuvWeather"
+                        }
+                    }
+                ],
+                "tags": [
+                    "Weather"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success message",
+                        "schema": {
+                            "$ref": "#/definitions/Success"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+		"/weather/tomorrowLowTemp": {
+            "post": {
+              "summary": "Add/Update a weather trigger that checks if the temperature will go below a value tomorrow",
+              "description": "This endpoint is used to add a weather trigger for the weather monitoring service",
+                "parameters": [
+                    {
+                        "name": "weather trigger",
+                        "in": "body",
+                        "description": "weather trigger JSON to be created",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/tltWeather"
+                        }
+                    }
+                ],
+                "tags": [
+                    "Weather"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success message",
+                        "schema": {
+                            "$ref": "#/definitions/Success"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+		"/weather/tomorrowHighTemp": {
+            "post": {
+              "summary": "Add/Update a weather trigger that checks if the temperature will go above a value tomorrow",
+              "description": "This endpoint is used to add a weather trigger for the weather monitoring service",
+                "parameters": [
+                    {
+                        "name": "weather trigger",
+                        "in": "body",
+                        "description": "weather trigger JSON to be created",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/thtWeather"
+                        }
+                    }
+                ],
+                "tags": [
+                    "Weather"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success message",
+                        "schema": {
+                            "$ref": "#/definitions/Success"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+		"/weather/todaySunrise": {
+            "post": {
+              "summary": "Add/Update a weather trigger that gets todays sunrise time",
+              "description": "This endpoint is used to add a weather trigger for the weather monitoring service",
+                "parameters": [
+                    {
+                        "name": "weather trigger",
+                        "in": "body",
+                        "description": "weather trigger JSON to be created",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/srWeather"
+                        }
+                    }
+                ],
+                "tags": [
+                    "Weather"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success message",
+                        "schema": {
+                            "$ref": "#/definitions/Success"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+		"/weather/todaySunset": {
+            "post": {
+              "summary": "Add/Update a weather trigger that gets todays sunset time",
+              "description": "This endpoint is used to add a weather trigger for the weather monitoring service",
+                "parameters": [
+                    {
+                        "name": "weather trigger",
+                        "in": "body",
+                        "description": "weather trigger JSON to be created",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/ssWeather"
                         }
                     }
                 ],
@@ -102,12 +544,8 @@
             "properties": {
                 "numWatch": {
                     "type": "integer",
-                    "description": "Value to watch for if the relations calls for it."
+                    "description": "Value to watch for."
                 },
-				"weather":{
-					"type": "string",
-					"description": "Only used in relation currentWeather and its the type of weather to watch for. Use either snow, rain, cloudy, or clear."
-				},
 				"numSystem": {
                     "type": "string",
                     "description": "To determine either US Standard(use US) or Metric(use M)."
@@ -124,17 +562,536 @@
                 },
                 "relation": {
                     "type": "string",
-                    "description": "Type of weather trigger (tempGT, tempLT, Alert, currentWeather, weatherChange, curForecast, tomForecast, todHumid, todWind, todUV, tomLtemp, tomHtemp, todSunrise, todSunset)",
+                    "description": "Type of weather trigger (tempGT)",
 					"required": true
-                },
-				"prevCond": {
-                    "type": "string",
-                    "description": "Only used in relations weatherChange and Alert. Used to limit the amount of times the recipe can trigger."
                 },
 				"inThreshold": {
 					"type": "boolean",
 					"description": "Always set to false. Used for limiting the amount of times a recipe can trigger."
 				}
+            }
+        },
+		"ltWeather": {
+            "properties": {
+                "recipeID": {
+                    "type": "string",
+                    "description": "Unique identifier representing a specific recipe/weather trigger"
+                },
+                "callbackURL": {
+                    "type": "string",
+                    "description": "Callback URL to call when scheduled time is up"
+                },
+                "trigger": {
+                    "description": "List of trigger specifications",
+                    "$ref": "#/definitions/ltTrigger"
+                }
+            }
+        },
+        "ltTrigger": {
+            "properties": {
+                "numWatch": {
+                    "type": "integer",
+                    "description": "Value to watch for."
+                },
+				"numSystem": {
+                    "type": "string",
+                    "description": "To determine either US Standard(use US) or Metric(use M)."
+                },
+                "lon": {
+                    "type": "integer",
+                    "description": "Longitude of location",
+					"required": true
+                },
+				"lat": {
+                    "type": "integer",
+                    "description": "Latitude of location",
+					"required": true
+                },
+                "relation": {
+                    "type": "string",
+                    "description": "Type of weather trigger (tempLT)",
+					"required": true
+                },
+				"inThreshold": {
+					"type": "boolean",
+					"description": "Always set to false. Used for limiting the amount of times a recipe can trigger."
+				}
+            }
+        },
+		"aWeather": {
+            "properties": {
+                "recipeID": {
+                    "type": "string",
+                    "description": "Unique identifier representing a specific recipe/weather trigger"
+                },
+                "callbackURL": {
+                    "type": "string",
+                    "description": "Callback URL to call when scheduled time is up"
+                },
+                "trigger": {
+                    "description": "List of trigger specifications",
+                    "$ref": "#/definitions/aTrigger"
+                }
+            }
+        },
+        "aTrigger": {
+            "properties": {
+                "lon": {
+                    "type": "integer",
+                    "description": "Longitude of location",
+					"required": true
+                },
+				"lat": {
+                    "type": "integer",
+                    "description": "Latitude of location",
+					"required": true
+                },
+                "relation": {
+                    "type": "string",
+                    "description": "Type of weather trigger (Alert)",
+					"required": true
+                },
+				"prevCond": {
+                    "type": "string",
+                    "description": "Used to limit the amount of times the recipe can trigger. Anything string can be input here."
+                }
+            }
+        },
+		"cswWeather": {
+            "properties": {
+                "recipeID": {
+                    "type": "string",
+                    "description": "Unique identifier representing a specific recipe/weather trigger"
+                },
+                "callbackURL": {
+                    "type": "string",
+                    "description": "Callback URL to call when scheduled time is up"
+                },
+                "trigger": {
+                    "description": "List of trigger specifications",
+                    "$ref": "#/definitions/cswTrigger"
+                }
+            }
+        },
+        "cswTrigger": {
+            "properties": {
+				"weather":{
+					"type": "string",
+					"description": "Use either snow, rain, cloudy, or clear."
+				},
+                "lon": {
+                    "type": "integer",
+                    "description": "Longitude of location",
+					"required": true
+                },
+				"lat": {
+                    "type": "integer",
+                    "description": "Latitude of location",
+					"required": true
+                },
+                "relation": {
+                    "type": "string",
+                    "description": "Type of weather trigger (currentWeather)",
+					"required": true
+                },
+				"inThreshold": {
+					"type": "boolean",
+					"description": "Always set to false. Used for limiting the amount of times a recipe can trigger."
+				}
+            }
+        },
+		"wcWeather": {
+            "properties": {
+                "recipeID": {
+                    "type": "string",
+                    "description": "Unique identifier representing a specific recipe/weather trigger"
+                },
+                "callbackURL": {
+                    "type": "string",
+                    "description": "Callback URL to call when scheduled time is up"
+                },
+                "trigger": {
+                    "description": "List of trigger specifications",
+                    "$ref": "#/definitions/wcTrigger"
+                }
+            }
+        },
+        "wcTrigger": {
+            "properties": {
+                "lon": {
+                    "type": "integer",
+                    "description": "Longitude of location",
+					"required": true
+                },
+				"lat": {
+                    "type": "integer",
+                    "description": "Latitude of location",
+					"required": true
+                },
+                "relation": {
+                    "type": "string",
+                    "description": "Type of weather trigger (weatherChange)",
+					"required": true
+                },
+				"prevCond": {
+                    "type": "string",
+                    "description": "Used to limit the amount of times the recipe can trigger. Any string can be put here."
+                }
+            }
+        },
+		"cfWeather": {
+            "properties": {
+                "recipeID": {
+                    "type": "string",
+                    "description": "Unique identifier representing a specific recipe/weather trigger"
+                },
+                "callbackURL": {
+                    "type": "string",
+                    "description": "Callback URL to call when scheduled time is up"
+                },
+                "trigger": {
+                    "description": "List of trigger specifications",
+                    "$ref": "#/definitions/cfTrigger"
+                }
+            }
+        },
+        "cfTrigger": {
+            "properties": {
+				"numSystem": {
+                    "type": "string",
+                    "description": "To determine either US Standard(use US) or Metric(use M)."
+                },
+                "lon": {
+                    "type": "integer",
+                    "description": "Longitude of location",
+					"required": true
+                },
+				"lat": {
+                    "type": "integer",
+                    "description": "Latitude of location",
+					"required": true
+                },
+                "relation": {
+                    "type": "string",
+                    "description": "Type of weather trigger (curForecast)",
+					"required": true
+                }
+            }
+        },
+		"tfWeather": {
+            "properties": {
+                "recipeID": {
+                    "type": "string",
+                    "description": "Unique identifier representing a specific recipe/weather trigger"
+                },
+                "callbackURL": {
+                    "type": "string",
+                    "description": "Callback URL to call when scheduled time is up"
+                },
+                "trigger": {
+                    "description": "List of trigger specifications",
+                    "$ref": "#/definitions/tfTrigger"
+                }
+            }
+        },
+        "tfTrigger": {
+            "properties": {
+				"numSystem": {
+                    "type": "string",
+                    "description": "To determine either US Standard(use US) or Metric(use M)."
+                },
+                "lon": {
+                    "type": "integer",
+                    "description": "Longitude of location",
+					"required": true
+                },
+				"lat": {
+                    "type": "integer",
+                    "description": "Latitude of location",
+					"required": true
+                },
+                "relation": {
+                    "type": "string",
+                    "description": "Type of weather trigger (tomForecast)",
+					"required": true
+                }
+            }
+        },
+		"thWeather": {
+            "properties": {
+                "recipeID": {
+                    "type": "string",
+                    "description": "Unique identifier representing a specific recipe/weather trigger"
+                },
+                "callbackURL": {
+                    "type": "string",
+                    "description": "Callback URL to call when scheduled time is up"
+                },
+                "trigger": {
+                    "description": "List of trigger specifications",
+                    "$ref": "#/definitions/thTrigger"
+                }
+            }
+        },
+        "thTrigger": {
+            "properties": {
+                "numWatch": {
+                    "type": "integer",
+                    "description": "Value to watch for."
+                },
+                "lon": {
+                    "type": "integer",
+                    "description": "Longitude of location",
+					"required": true
+                },
+				"lat": {
+                    "type": "integer",
+                    "description": "Latitude of location",
+					"required": true
+                },
+                "relation": {
+                    "type": "string",
+                    "description": "Type of weather trigger (todHumid)",
+					"required": true
+                }
+            }
+        },
+		"twWeather": {
+            "properties": {
+                "recipeID": {
+                    "type": "string",
+                    "description": "Unique identifier representing a specific recipe/weather trigger"
+                },
+                "callbackURL": {
+                    "type": "string",
+                    "description": "Callback URL to call when scheduled time is up"
+                },
+                "trigger": {
+                    "description": "List of trigger specifications",
+                    "$ref": "#/definitions/twTrigger"
+                }
+            }
+        },
+        "twTrigger": {
+            "properties": {
+                "numWatch": {
+                    "type": "integer",
+                    "description": "Value to watch for."
+                },
+				"numSystem": {
+                    "type": "string",
+                    "description": "To determine either US Standard(use US) or Metric(use M)."
+                },
+                "lon": {
+                    "type": "integer",
+                    "description": "Longitude of location",
+					"required": true
+                },
+				"lat": {
+                    "type": "integer",
+                    "description": "Latitude of location",
+					"required": true
+                },
+                "relation": {
+                    "type": "string",
+                    "description": "Type of weather trigger (todWind)",
+					"required": true
+                }
+            }
+        },
+		"tuvWeather": {
+            "properties": {
+                "recipeID": {
+                    "type": "string",
+                    "description": "Unique identifier representing a specific recipe/weather trigger"
+                },
+                "callbackURL": {
+                    "type": "string",
+                    "description": "Callback URL to call when scheduled time is up"
+                },
+                "trigger": {
+                    "description": "List of trigger specifications",
+                    "$ref": "#/definitions/tuvTrigger"
+                }
+            }
+        },
+        "tuvTrigger": {
+            "properties": {
+                "numWatch": {
+                    "type": "integer",
+                    "description": "Value to watch for."
+                },
+                "lon": {
+                    "type": "integer",
+                    "description": "Longitude of location",
+					"required": true
+                },
+				"lat": {
+                    "type": "integer",
+                    "description": "Latitude of location",
+					"required": true
+                },
+                "relation": {
+                    "type": "string",
+                    "description": "Type of weather trigger (todUV)",
+					"required": true
+                }
+            }
+        },
+		"tltWeather": {
+            "properties": {
+                "recipeID": {
+                    "type": "string",
+                    "description": "Unique identifier representing a specific recipe/weather trigger"
+                },
+                "callbackURL": {
+                    "type": "string",
+                    "description": "Callback URL to call when scheduled time is up"
+                },
+                "trigger": {
+                    "description": "List of trigger specifications",
+                    "$ref": "#/definitions/tltTrigger"
+                }
+            }
+        },
+        "tltTrigger": {
+            "properties": {
+                "numWatch": {
+                    "type": "integer",
+                    "description": "Value to watch for."
+                },
+				"numSystem": {
+                    "type": "string",
+                    "description": "To determine either US Standard(use US) or Metric(use M)."
+                },
+                "lon": {
+                    "type": "integer",
+                    "description": "Longitude of location",
+					"required": true
+                },
+				"lat": {
+                    "type": "integer",
+                    "description": "Latitude of location",
+					"required": true
+                },
+                "relation": {
+                    "type": "string",
+                    "description": "Type of weather trigger (tomLtemp)",
+					"required": true
+                }
+            }
+        },
+		"thtWeather": {
+            "properties": {
+                "recipeID": {
+                    "type": "string",
+                    "description": "Unique identifier representing a specific recipe/weather trigger"
+                },
+                "callbackURL": {
+                    "type": "string",
+                    "description": "Callback URL to call when scheduled time is up"
+                },
+                "trigger": {
+                    "description": "List of trigger specifications",
+                    "$ref": "#/definitions/thtTrigger"
+                }
+            }
+        },
+        "thtTrigger": {
+            "properties": {
+                "numWatch": {
+                    "type": "integer",
+                    "description": "Value to watch for."
+                },
+				"numSystem": {
+                    "type": "string",
+                    "description": "To determine either US Standard(use US) or Metric(use M)."
+                },
+                "lon": {
+                    "type": "integer",
+                    "description": "Longitude of location",
+					"required": true
+                },
+				"lat": {
+                    "type": "integer",
+                    "description": "Latitude of location",
+					"required": true
+                },
+                "relation": {
+                    "type": "string",
+                    "description": "Type of weather trigger (tomHtemp)",
+					"required": true
+                }
+            }
+        },
+		"srWeather": {
+            "properties": {
+                "recipeID": {
+                    "type": "string",
+                    "description": "Unique identifier representing a specific recipe/weather trigger"
+                },
+                "callbackURL": {
+                    "type": "string",
+                    "description": "Callback URL to call when scheduled time is up"
+                },
+                "trigger": {
+                    "description": "List of trigger specifications",
+                    "$ref": "#/definitions/srTrigger"
+                }
+            }
+        },
+        "srTrigger": {
+            "properties": {
+                "lon": {
+                    "type": "integer",
+                    "description": "Longitude of location",
+					"required": true
+                },
+				"lat": {
+                    "type": "integer",
+                    "description": "Latitude of location",
+					"required": true
+                },
+                "relation": {
+                    "type": "string",
+                    "description": "Type of weather trigger (todSunrise)",
+					"required": true
+                }
+            }
+        },
+		"ssWeather": {
+            "properties": {
+                "recipeID": {
+                    "type": "string",
+                    "description": "Unique identifier representing a specific recipe/weather trigger"
+                },
+                "callbackURL": {
+                    "type": "string",
+                    "description": "Callback URL to call when scheduled time is up"
+                },
+                "trigger": {
+                    "description": "List of trigger specifications",
+                    "$ref": "#/definitions/ssTrigger"
+                }
+            }
+        },
+        "ssTrigger": {
+            "properties": {
+                "lon": {
+                    "type": "integer",
+                    "description": "Longitude of location",
+					"required": true
+                },
+				"lat": {
+                    "type": "integer",
+                    "description": "Latitude of location",
+					"required": true
+                },
+                "relation": {
+                    "type": "string",
+                    "description": "Type of weather trigger (todSunset)",
+					"required": true
+                }
             }
         },
 
