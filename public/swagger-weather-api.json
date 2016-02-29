@@ -490,7 +490,7 @@
                 }
             }
         },
-        "/weather/:recipeid": {
+        "/weather/{recipeID}": {
             "delete": {
                 "summary": "Delete a weather trigger",
                 "description": "This endpoint deletes a weather trigger matching the recipeID",

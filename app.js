@@ -30,115 +30,464 @@ app.use(bodyParser.json());
 // app.use(express.json());
 app.use(express.static(__dirname + '/public'));
 
-// Check for appropriate values
-// ingrediants look into 
-// email digest loook into
-
-app.post('/api/v1/weather/*', function(req, res){
-	console.log("recipes was hit")
-	/**
-	1.) Store recipe in DB and return response
-	2.) start cronJob
-	*/
-	var request = req.body;
-
-	recipesDB.insert(request, function(err, body, header){
-		var response = {};
+app.delete('/api/v1/weather/:recipeid', function(req, res){
+	console.log("weatherRecipe delete hit");
+	var del_ID = req.params.recipeid;
+	console.log(del_ID);
+	
+	recipesDB.get(del_ID, function(err, data){
 		if(err){
-			res.send("Error adding recipe.");
-		}else{
-			var idNum = body.id;
-			res.json({success: true, msg: 'Successfully added the weather recipe to database.'});
-			var relation = request.trigger.relation;
-			//sets up if recipe is calling for temperature monitoring
-			if (relation == "tempLT" || relation == "tempGT" || relation=="EQ") {
-				// Runs watch for Temperature every 4 hours at the start of the hour
-				//var cronJob = cron.job("0 0 */4 * * *", function(){
-				var cronJob = cron.job("0 */1 * * * *", function(){
-					watchTemperature(idNum);
-				});
-				cronJob.start();
-			} else if (relation == "Alert") {
-				//console.log("in alert")
-				// Runs watch for weather advisories every 1 hour at the start of the hour
-				//var cronJob = cron.job("0 0 */1 * * *", function() {
-				var cronJob = cron.job("0 */1 * * * *", function(){
-					watchAlert(idNum);
-				});
-				cronJob.start();
-			} else if (relation == "currentWeather") {
-				// Runs watch for weather every 1 hour at the start of the hour
-				//var cronJob = cron.job("0 0 */1 * * *", function() {
-				var cronJob = cron.job("0 */1 * * * *", function(){
-					watchCurWeather(idNum);
-				});
-				cronJob.start();
-			} else if (relation == "weatherChange") {
-				// Runs watch for weather every 1 hour at the start of the hour
-				//var cronJob = cron.job("0 0 */1 * * *", function(){
-				var cronJob = cron.job("0 */1 * * * *", function(){
-					watchWeather(idNum);
-				});
-				cronJob.start();
-			} else if (relation == "curForecast") {
-				// Runs every day at 4 am
-				//var cronJob = cron.job("0 0 4 */1 * *", function(){
-				var cronJob = cron.job("0 */1 * * * *", function(){
-					todaysWeather(idNum);
-				});
-				cronJob.start();
-			} else if (relation == "tomForecast") {
-				// Runs every day at noon
-				//var cronJob = cron.job("0 0 12 */1 * *", function(){
-				var cronJob = cron.job("0 */1 * * * *", function(){
-					tomWeather(idNum);
-				});
-				cronJob.start();
-			} else if (relation == "tomHtemp") {
-				// Runs every day at noon
-				//var cronJob = cron.job("0 0 12 */1 * *", function(){
-				var cronJob = cron.job("0 */1 * * * *", function(){
-					tomHighTemp(idNum);
-				});
-				cronJob.start();
-			} else if (relation == "tomLtemp") {
-				// Runs every day at noon
-				//var cronJob = cron.job("0 0 12 */1 * *", function(){
-				var cronJob = cron.job("0 */1 * * * *", function(){
-					tomLowTemp(idNum);
-				});
-				cronJob.start();
-			} else if (relation == "todHumid") {
-				// Runs every day at 5 am
-				//var cronJob = cron.job("0 0 5 */1 * *", function(){
-				var cronJob = cron.job("0 */1 * * * *", function(){
-					todayHumid(idNum);
-				});
-				cronJob.start();
-			} else if (relation == "todWind") {
-				// Runs every day at 5 am
-				//var cronJob = cron.job("0 0 5 */1 * *", function(){
-				var cronJob = cron.job("0 */1 * * * *", function(){
-					todayWind(idNum);
-				});
-				cronJob.start();
-			} else if (relation == "todUV") {
-				// Runs every day at noon
-				//var cronJob = cron.job("0 0 12 */1 * *", function(){
-				var cronJob = cron.job("0 */1 * * * *", function(){
-					todayUV(idNum);
-				});
-				cronJob.start();
-			} else if (relation == "todSunrise" || relation == "todSunset") {
-				// Runs every day at noon
-				//var cronJob = cron.job("0 0 12 */1 * *", function(){
-				var cronJob = cron.job("0 */1 * * * *", function(){
-					todaySun(idNum);
-				});
-				cronJob.start();
-			}					
+			res.json({success: false, msg: 'Failed to find the recipe in the database, please try again.'});
+		} else {
+			var rev = data._rev;
+			recipesDB.destroy(del_ID, rev,  function(err) {
+				if (!err) {
+					res.json({success: true, msg: 'Successfully deleted the weather recipe from the database.'});
+					console.log("Successfully deleted doc"+ del_ID);
+				} else {
+					res.json({success: false, msg: 'Failed to delete recipe from the database, please try again.'});
+					//console.log("failed");
+				}
+			});
 		}
-	})	
+	});
+});
+
+app.post('/api/v1/weather/temperatureGT', function(req, res){
+	var request = req.body;
+	
+	if(request.callbackURL == "") {
+		res.json({success: false, msg: 'No callbackURL submitted.'});
+	} else if (request.trigger.numSystem != "US" && request.trigger.numSystem != "M") {
+		res.json({success: false, msg: 'The numSystem submitted was not US or M.'});
+	} else if (request.trigger.relation != "tempGT") {
+		res.json({success: false, msg: 'The relation submitted is not tempGT.'});
+	} else {
+
+		recipesDB.insert(request, function(err, body, header){
+			if(err){
+				res.json({success: false, msg: 'Failed to add the weather recipe to database.'});
+			}else{
+				var idNum = body.id;
+				res.json({success: true, msg: 'Successfully added the weather recipe to database.'});
+				var relation = request.trigger.relation;
+				//sets up if recipe is calling for temperature monitoring
+				if (relation == "tempGT") {
+					// Runs watch for Temperature every 4 hours at the start of the hour
+					//var cronJob = cron.job("0 0 */4 * * *", function(){
+					var cronJob = cron.job("0 */1 * * * *", function(){
+						watchTemperature(idNum);
+					});
+					cronJob.start();
+				} 					
+			}
+		})
+	}
+});
+app.post('/api/v1/weather/temperatureLT', function(req, res){
+	var request = req.body;
+	
+	if(request.callbackURL == "") {
+		res.json({success: false, msg: 'No callbackURL submitted.'});
+	} else if (request.trigger.numSystem != "US" && request.trigger.numSystem != "M") {
+		res.json({success: false, msg: 'The numSystem submitted was not US or M.'});
+	} else if (request.trigger.relation != "tempLT") {
+		res.json({success: false, msg: 'The relation submitted is not tempLT.'});
+	} else {
+
+		recipesDB.insert(request, function(err, body, header){
+			if(err){
+				res.json({success: false, msg: 'Failed to add the weather recipe to database.'});
+			}else{
+				var idNum = body.id;
+				res.json({success: true, msg: 'Successfully added the weather recipe to database.'});
+				var relation = request.trigger.relation;
+				//sets up if recipe is calling for temperature monitoring
+				if (relation == "tempLT") {
+					// Runs watch for Temperature every 4 hours at the start of the hour
+					//var cronJob = cron.job("0 0 */4 * * *", function(){
+					var cronJob = cron.job("0 */1 * * * *", function(){
+						watchTemperature(idNum);
+					});
+					cronJob.start();
+				} 				
+			}
+		})
+	}
+});
+
+app.post('/api/v1/weather/alert', function(req, res){
+	var request = req.body;
+	
+	if(request.callbackURL == "") {
+		res.json({success: false, msg: 'No callbackURL submitted.'});
+	} else if (request.trigger.relation != "Alert") {
+		res.json({success: false, msg: 'The relation submitted is not Alert.'});
+	} else {
+
+		recipesDB.insert(request, function(err, body, header){
+			if(err){
+				res.json({success: false, msg: 'Failed to add the weather recipe to database.'});
+			}else{
+				var idNum = body.id;
+				res.json({success: true, msg: 'Successfully added the weather recipe to database.'});
+				var relation = request.trigger.relation;
+				
+				if (relation == "Alert") {
+					//console.log("in alert")
+					// Runs watch for weather advisories every 1 hour at the start of the hour
+					//var cronJob = cron.job("0 0 */1 * * *", function() {
+					var cronJob = cron.job("0 */1 * * * *", function(){
+						watchAlert(idNum);
+					});
+					cronJob.start();
+				} 					
+			}
+		})
+	}
+});
+
+app.post('/api/v1/weather/specificWeather', function(req, res){
+	var request = req.body;
+	
+	if(request.callbackURL == "") {
+		res.json({success: false, msg: 'No callbackURL submitted.'});
+	} else if (request.trigger.relation != "currentWeather") {
+		res.json({success: false, msg: 'The relation submitted is not currentWeather.'});
+	} else if (request.trigger.weather != "snow" && request.trigger.weather != "rain" 
+	&& request.trigger.weather != "cloudy" && request.trigger.weather != "clear") {
+		res.json({success: false, msg: 'The weather was not submitted as either rain, snow, cloudy, or clear.'});
+	} else {
+
+		recipesDB.insert(request, function(err, body, header){
+			if(err){
+				res.json({success: false, msg: 'Failed to add the weather recipe to database.'});
+			}else{
+				var idNum = body.id;
+				res.json({success: true, msg: 'Successfully added the weather recipe to database.'});
+				var relation = request.trigger.relation;
+				
+				if (relation == "currentWeather") {
+					// Runs watch for weather every 1 hour at the start of the hour
+					//var cronJob = cron.job("0 0 */1 * * *", function() {
+					var cronJob = cron.job("0 */1 * * * *", function(){
+						watchCurWeather(idNum);
+					});
+					cronJob.start();
+				} 					
+			}
+		})
+	}
+});
+
+app.post('/api/v1/weather/weatherChange', function(req, res){
+	var request = req.body;
+	
+	if(request.callbackURL == "") {
+		res.json({success: false, msg: 'No callbackURL submitted.'});
+	} else if (request.trigger.relation != "weatherChange") {
+		res.json({success: false, msg: 'The relation submitted is not weatherChange.'});
+	} else {
+
+		recipesDB.insert(request, function(err, body, header){
+			if(err){
+				res.json({success: false, msg: 'Failed to add the weather recipe to database.'});
+			}else{
+				var idNum = body.id;
+				res.json({success: true, msg: 'Successfully added the weather recipe to database.'});
+				var relation = request.trigger.relation;
+				
+				if (relation == "weatherChange") {
+					// Runs watch for weather every 1 hour at the start of the hour
+					//var cronJob = cron.job("0 0 */1 * * *", function(){
+					var cronJob = cron.job("0 */1 * * * *", function(){
+						watchWeather(idNum);
+					});
+					cronJob.start();
+				} 					
+			}
+		})
+	}
+});
+
+app.post('/api/v1/weather/currentForecast', function(req, res){
+	var request = req.body;
+	
+	if(request.callbackURL == "") {
+		res.json({success: false, msg: 'No callbackURL submitted.'});
+	} else if (request.trigger.numSystem != "US" && request.trigger.numSystem != "M") {
+		res.json({success: false, msg: 'The numSystem submitted was not US or M.'});
+	} else if (request.trigger.relation != "curForecast") {
+		res.json({success: false, msg: 'The relation submitted is not curForecast.'});
+	} else {
+
+		recipesDB.insert(request, function(err, body, header){
+			if(err){
+				res.json({success: false, msg: 'Failed to add the weather recipe to database.'});
+			}else{
+				var idNum = body.id;
+				res.json({success: true, msg: 'Successfully added the weather recipe to database.'});
+				var relation = request.trigger.relation;
+				
+				if (relation == "curForecast") {
+					// Runs every day at 4 am
+					//var cronJob = cron.job("0 0 4 */1 * *", function(){
+					var cronJob = cron.job("0 */1 * * * *", function(){
+						todaysWeather(idNum);
+					});
+					cronJob.start();
+				} 					
+			}
+		})
+	}
+});
+
+app.post('/api/v1/weather/tomorrowForecast', function(req, res){
+	var request = req.body;
+	
+	if(request.callbackURL == "") {
+		res.json({success: false, msg: 'No callbackURL submitted.'});
+	} else if (request.trigger.numSystem != "US" && request.trigger.numSystem != "M") {
+		res.json({success: false, msg: 'The numSystem submitted was not US or M.'});
+	} else if (request.trigger.relation != "tomForecast") {
+		res.json({success: false, msg: 'The relation submitted is not tomForecast.'});
+	} else {
+
+		recipesDB.insert(request, function(err, body, header){
+			if(err){
+				res.json({success: false, msg: 'Failed to add the weather recipe to database.'});
+			}else{
+				var idNum = body.id;
+				res.json({success: true, msg: 'Successfully added the weather recipe to database.'});
+				var relation = request.trigger.relation;
+				
+				if (relation == "tomForecast") {
+					// Runs every day at noon
+					//var cronJob = cron.job("0 0 12 */1 * *", function(){
+					var cronJob = cron.job("0 */1 * * * *", function(){
+						tomWeather(idNum);
+					});
+					cronJob.start();
+				} 					
+			}
+		})
+	}
+});
+
+app.post('/api/v1/weather/tomorrowHighTemp', function(req, res){
+	var request = req.body;
+	
+	if(request.callbackURL == "") {
+		res.json({success: false, msg: 'No callbackURL submitted.'});
+	} else if (request.trigger.numSystem != "US" && request.trigger.numSystem != "M") {
+		res.json({success: false, msg: 'The numSystem submitted was not US or M.'});
+	} else if (request.trigger.relation != "tomHtemp") {
+		res.json({success: false, msg: 'The relation submitted is not tomHtemp.'});
+	} else {
+
+		recipesDB.insert(request, function(err, body, header){
+			if(err){
+				res.json({success: false, msg: 'Failed to add the weather recipe to database.'});
+			}else{
+				var idNum = body.id;
+				res.json({success: true, msg: 'Successfully added the weather recipe to database.'});
+				var relation = request.trigger.relation;
+				
+				if (relation == "tomHtemp") {
+					// Runs every day at noon
+					//var cronJob = cron.job("0 0 12 */1 * *", function(){
+					var cronJob = cron.job("0 */1 * * * *", function(){
+						tomHighTemp(idNum);
+					});
+					cronJob.start();
+				} 					
+			}
+		})
+	}
+});
+
+app.post('/api/v1/weather/tomorrowLowTemp', function(req, res){
+	var request = req.body;
+	
+	if(request.callbackURL == "") {
+		res.json({success: false, msg: 'No callbackURL submitted.'});
+	} else if (request.trigger.numSystem != "US" && request.trigger.numSystem != "M") {
+		res.json({success: false, msg: 'The numSystem submitted was not US or M.'});
+	} else if (request.trigger.relation != "tomLtemp") {
+		res.json({success: false, msg: 'The relation submitted is not tomLtemp.'});
+	} else {
+
+		recipesDB.insert(request, function(err, body, header){
+			if(err){
+				res.json({success: false, msg: 'Failed to add the weather recipe to database.'});
+			}else{
+				var idNum = body.id;
+				res.json({success: true, msg: 'Successfully added the weather recipe to database.'});
+				var relation = request.trigger.relation;
+				
+				if (relation == "tomLtemp") {
+					// Runs every day at noon
+					//var cronJob = cron.job("0 0 12 */1 * *", function(){
+					var cronJob = cron.job("0 */1 * * * *", function(){
+						tomLowTemp(idNum);
+					});
+					cronJob.start();
+				} 				
+			}
+		})
+	}
+});
+
+app.post('/api/v1/weather/todayHumidity', function(req, res){
+	var request = req.body;
+	
+	if(request.callbackURL == "") {
+		res.json({success: false, msg: 'No callbackURL submitted.'});
+	} else if (request.trigger.relation != "todHumid") {
+		res.json({success: false, msg: 'The relation submitted is not todHumid.'});
+	} else {
+
+		recipesDB.insert(request, function(err, body, header){
+			if(err){
+				res.json({success: false, msg: 'Failed to add the weather recipe to database.'});
+			}else{
+				var idNum = body.id;
+				res.json({success: true, msg: 'Successfully added the weather recipe to database.'});
+				var relation = request.trigger.relation;
+				
+				if (relation == "todHumid") {
+					// Runs every day at 5 am
+					//var cronJob = cron.job("0 0 5 */1 * *", function(){
+					var cronJob = cron.job("0 */1 * * * *", function(){
+						todayHumid(idNum);
+					});
+					cronJob.start();
+				} 					
+			}
+		})
+	}
+});
+
+app.post('/api/v1/weather/todayWind', function(req, res){
+	var request = req.body;
+	
+	if(request.callbackURL == "") {
+		res.json({success: false, msg: 'No callbackURL submitted.'});
+	} else if (request.trigger.numSystem != "US" && request.trigger.numSystem != "M") {
+		res.json({success: false, msg: 'The numSystem submitted was not US or M.'});
+	} else if (request.trigger.relation != "todWind") {
+		res.json({success: false, msg: 'The relation submitted is not todWind.'});
+	} else {
+
+		recipesDB.insert(request, function(err, body, header){
+			if(err){
+				res.json({success: false, msg: 'Failed to add the weather recipe to database.'});
+			}else{
+				var idNum = body.id;
+				res.json({success: true, msg: 'Successfully added the weather recipe to database.'});
+				var relation = request.trigger.relation;
+				
+				if (relation == "todWind") {
+					// Runs every day at 5 am
+					//var cronJob = cron.job("0 0 5 */1 * *", function(){
+					var cronJob = cron.job("0 */1 * * * *", function(){
+						todayWind(idNum);
+					});
+					cronJob.start();
+				} 					
+			}
+		})
+	}
+});
+
+app.post('/api/v1/weather/todayUV', function(req, res){
+	var request = req.body;
+	
+	if(request.callbackURL == "") {
+		res.json({success: false, msg: 'No callbackURL submitted.'});
+	} else if (request.trigger.relation != "todUV") {
+		res.json({success: false, msg: 'The relation submitted is not todUV.'});
+	} else {
+
+		recipesDB.insert(request, function(err, body, header){
+			if(err){
+				res.json({success: false, msg: 'Failed to add the weather recipe to database.'});
+			}else{
+				var idNum = body.id;
+				res.json({success: true, msg: 'Successfully added the weather recipe to database.'});
+				var relation = request.trigger.relation;
+				
+				if (relation == "todUV") {
+					// Runs every day at noon
+					//var cronJob = cron.job("0 0 12 */1 * *", function(){
+					var cronJob = cron.job("0 */1 * * * *", function(){
+						todayUV(idNum);
+					});
+					cronJob.start();
+				} 					
+			}
+		})
+	}
+});
+
+app.post('/api/v1/weather/todaySunrise', function(req, res){
+	var request = req.body;
+	
+	if(request.callbackURL == "") {
+		res.json({success: false, msg: 'No callbackURL submitted.'});
+	} else if (request.trigger.relation != "todSunrise") {
+		res.json({success: false, msg: 'The relation submitted is not todSunrise.'});
+	} else {
+
+		recipesDB.insert(request, function(err, body, header){
+			if(err){
+				res.json({success: false, msg: 'Failed to add the weather recipe to database.'});
+			}else{
+				var idNum = body.id;
+				res.json({success: true, msg: 'Successfully added the weather recipe to database.'});
+				var relation = request.trigger.relation;
+				
+				if (relation == "todSunrise" ) {
+					// Runs every day at noon
+					//var cronJob = cron.job("0 0 12 */1 * *", function(){
+					var cronJob = cron.job("0 */1 * * * *", function(){
+						todaySun(idNum);
+					});
+					cronJob.start();
+				}					
+			}
+		})
+	}
+});
+
+app.post('/api/v1/weather/todaySunset', function(req, res){
+	var request = req.body;
+	
+	if(request.callbackURL == "") {
+		res.json({success: false, msg: 'No callbackURL submitted.'});
+	} else if (request.trigger.relation != "todSunset") {
+		res.json({success: false, msg: 'The relation submitted is not todSunset.'});
+	} else {
+
+		recipesDB.insert(request, function(err, body, header){
+			if(err){
+				res.json({success: false, msg: 'Failed to add the weather recipe to database.'});
+			}else{
+				var idNum = body.id;
+				res.json({success: true, msg: 'Successfully added the weather recipe to database.'});
+				var relation = request.trigger.relation;
+				
+				if (relation == "todSunset") {
+					// Runs every day at noon
+					//var cronJob = cron.job("0 0 12 */1 * *", function(){
+					var cronJob = cron.job("0 */1 * * * *", function(){
+						todaySun(idNum);
+					});
+					cronJob.start();
+				}					
+			}
+		})
+	}
 });
 
 
