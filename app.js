@@ -31,9 +31,9 @@ app.use(bodyParser.json());
 app.use(express.static(__dirname + '/public'));
 
 app.delete('/api/v1/weather/:recipeid', function(req, res){
-	console.log("weatherRecipe delete hit");
+	//console.log("weatherRecipe delete hit");
 	var del_ID = req.params.recipeid;
-	console.log(del_ID);
+	//console.log(del_ID);
 	
 	recipesDB.get(del_ID, function(err, data){
 		if(err){
@@ -55,13 +55,13 @@ app.delete('/api/v1/weather/:recipeid', function(req, res){
 
 app.post('/api/v1/weather/temperatureGT', function(req, res){
 	var request = req.body;
+	request.trigger.relation = "tempGT";
+	request.trigger.inThreshold = false;
 	
 	if(request.callbackURL == "") {
 		res.json({success: false, msg: 'No callbackURL submitted.'});
 	} else if (request.trigger.numSystem != "US" && request.trigger.numSystem != "M") {
 		res.json({success: false, msg: 'The numSystem submitted was not US or M.'});
-	} else if (request.trigger.relation != "tempGT") {
-		res.json({success: false, msg: 'The relation submitted is not tempGT.'});
 	} else {
 
 		recipesDB.insert(request, function(err, body, header){
@@ -86,13 +86,13 @@ app.post('/api/v1/weather/temperatureGT', function(req, res){
 });
 app.post('/api/v1/weather/temperatureLT', function(req, res){
 	var request = req.body;
+	request.trigger.relation = "tempLT";
+	request.trigger.inThreshold = false;
 	
 	if(request.callbackURL == "") {
 		res.json({success: false, msg: 'No callbackURL submitted.'});
 	} else if (request.trigger.numSystem != "US" && request.trigger.numSystem != "M") {
 		res.json({success: false, msg: 'The numSystem submitted was not US or M.'});
-	} else if (request.trigger.relation != "tempLT") {
-		res.json({success: false, msg: 'The relation submitted is not tempLT.'});
 	} else {
 
 		recipesDB.insert(request, function(err, body, header){
@@ -118,11 +118,11 @@ app.post('/api/v1/weather/temperatureLT', function(req, res){
 
 app.post('/api/v1/weather/alert', function(req, res){
 	var request = req.body;
+	request.trigger.relation = "Alert";
+	request.trigger.prevCond = "";
 	
 	if(request.callbackURL == "") {
 		res.json({success: false, msg: 'No callbackURL submitted.'});
-	} else if (request.trigger.relation != "Alert") {
-		res.json({success: false, msg: 'The relation submitted is not Alert.'});
 	} else {
 
 		recipesDB.insert(request, function(err, body, header){
@@ -149,11 +149,11 @@ app.post('/api/v1/weather/alert', function(req, res){
 
 app.post('/api/v1/weather/specificWeather', function(req, res){
 	var request = req.body;
+	request.trigger.relation = "currentWeather";
+	request.trigger.inThreshold = false;
 	
 	if(request.callbackURL == "") {
 		res.json({success: false, msg: 'No callbackURL submitted.'});
-	} else if (request.trigger.relation != "currentWeather") {
-		res.json({success: false, msg: 'The relation submitted is not currentWeather.'});
 	} else if (request.trigger.weather != "snow" && request.trigger.weather != "rain" 
 	&& request.trigger.weather != "cloudy" && request.trigger.weather != "clear") {
 		res.json({success: false, msg: 'The weather was not submitted as either rain, snow, cloudy, or clear.'});
@@ -182,11 +182,11 @@ app.post('/api/v1/weather/specificWeather', function(req, res){
 
 app.post('/api/v1/weather/weatherChange', function(req, res){
 	var request = req.body;
+	request.trigger.relation = "weatherChange";
+	request.trigger.prevCond = "";
 	
 	if(request.callbackURL == "") {
 		res.json({success: false, msg: 'No callbackURL submitted.'});
-	} else if (request.trigger.relation != "weatherChange") {
-		res.json({success: false, msg: 'The relation submitted is not weatherChange.'});
 	} else {
 
 		recipesDB.insert(request, function(err, body, header){
@@ -212,13 +212,12 @@ app.post('/api/v1/weather/weatherChange', function(req, res){
 
 app.post('/api/v1/weather/currentForecast', function(req, res){
 	var request = req.body;
+	request.trigger.relation = "curForecast";
 	
 	if(request.callbackURL == "") {
 		res.json({success: false, msg: 'No callbackURL submitted.'});
 	} else if (request.trigger.numSystem != "US" && request.trigger.numSystem != "M") {
 		res.json({success: false, msg: 'The numSystem submitted was not US or M.'});
-	} else if (request.trigger.relation != "curForecast") {
-		res.json({success: false, msg: 'The relation submitted is not curForecast.'});
 	} else {
 
 		recipesDB.insert(request, function(err, body, header){
@@ -244,13 +243,12 @@ app.post('/api/v1/weather/currentForecast', function(req, res){
 
 app.post('/api/v1/weather/tomorrowForecast', function(req, res){
 	var request = req.body;
+	request.trigger.relation = "tomForecast";
 	
 	if(request.callbackURL == "") {
 		res.json({success: false, msg: 'No callbackURL submitted.'});
 	} else if (request.trigger.numSystem != "US" && request.trigger.numSystem != "M") {
 		res.json({success: false, msg: 'The numSystem submitted was not US or M.'});
-	} else if (request.trigger.relation != "tomForecast") {
-		res.json({success: false, msg: 'The relation submitted is not tomForecast.'});
 	} else {
 
 		recipesDB.insert(request, function(err, body, header){
@@ -276,13 +274,12 @@ app.post('/api/v1/weather/tomorrowForecast', function(req, res){
 
 app.post('/api/v1/weather/tomorrowHighTemp', function(req, res){
 	var request = req.body;
+	request.trigger.relation = "tomHtemp";
 	
 	if(request.callbackURL == "") {
 		res.json({success: false, msg: 'No callbackURL submitted.'});
 	} else if (request.trigger.numSystem != "US" && request.trigger.numSystem != "M") {
 		res.json({success: false, msg: 'The numSystem submitted was not US or M.'});
-	} else if (request.trigger.relation != "tomHtemp") {
-		res.json({success: false, msg: 'The relation submitted is not tomHtemp.'});
 	} else {
 
 		recipesDB.insert(request, function(err, body, header){
@@ -308,13 +305,12 @@ app.post('/api/v1/weather/tomorrowHighTemp', function(req, res){
 
 app.post('/api/v1/weather/tomorrowLowTemp', function(req, res){
 	var request = req.body;
+	request.trigger.relation = "tomLtemp";
 	
 	if(request.callbackURL == "") {
 		res.json({success: false, msg: 'No callbackURL submitted.'});
 	} else if (request.trigger.numSystem != "US" && request.trigger.numSystem != "M") {
 		res.json({success: false, msg: 'The numSystem submitted was not US or M.'});
-	} else if (request.trigger.relation != "tomLtemp") {
-		res.json({success: false, msg: 'The relation submitted is not tomLtemp.'});
 	} else {
 
 		recipesDB.insert(request, function(err, body, header){
@@ -340,11 +336,10 @@ app.post('/api/v1/weather/tomorrowLowTemp', function(req, res){
 
 app.post('/api/v1/weather/todayHumidity', function(req, res){
 	var request = req.body;
+	request.trigger.relation = "todHumid";
 	
 	if(request.callbackURL == "") {
 		res.json({success: false, msg: 'No callbackURL submitted.'});
-	} else if (request.trigger.relation != "todHumid") {
-		res.json({success: false, msg: 'The relation submitted is not todHumid.'});
 	} else {
 
 		recipesDB.insert(request, function(err, body, header){
@@ -370,13 +365,12 @@ app.post('/api/v1/weather/todayHumidity', function(req, res){
 
 app.post('/api/v1/weather/todayWind', function(req, res){
 	var request = req.body;
+	request.trigger.relation = "todWind";
 	
 	if(request.callbackURL == "") {
 		res.json({success: false, msg: 'No callbackURL submitted.'});
 	} else if (request.trigger.numSystem != "US" && request.trigger.numSystem != "M") {
 		res.json({success: false, msg: 'The numSystem submitted was not US or M.'});
-	} else if (request.trigger.relation != "todWind") {
-		res.json({success: false, msg: 'The relation submitted is not todWind.'});
 	} else {
 
 		recipesDB.insert(request, function(err, body, header){
@@ -402,11 +396,10 @@ app.post('/api/v1/weather/todayWind', function(req, res){
 
 app.post('/api/v1/weather/todayUV', function(req, res){
 	var request = req.body;
+	request.trigger.relation = "todUV";
 	
 	if(request.callbackURL == "") {
 		res.json({success: false, msg: 'No callbackURL submitted.'});
-	} else if (request.trigger.relation != "todUV") {
-		res.json({success: false, msg: 'The relation submitted is not todUV.'});
 	} else {
 
 		recipesDB.insert(request, function(err, body, header){
@@ -432,12 +425,11 @@ app.post('/api/v1/weather/todayUV', function(req, res){
 
 app.post('/api/v1/weather/todaySunrise', function(req, res){
 	var request = req.body;
+	request.trigger.relation = "todSunrise";
 	
 	if(request.callbackURL == "") {
 		res.json({success: false, msg: 'No callbackURL submitted.'});
-	} else if (request.trigger.relation != "todSunrise") {
-		res.json({success: false, msg: 'The relation submitted is not todSunrise.'});
-	} else {
+	}  else {
 
 		recipesDB.insert(request, function(err, body, header){
 			if(err){
@@ -462,11 +454,10 @@ app.post('/api/v1/weather/todaySunrise', function(req, res){
 
 app.post('/api/v1/weather/todaySunset', function(req, res){
 	var request = req.body;
+	request.trigger.relation = "todSunset";
 	
 	if(request.callbackURL == "") {
 		res.json({success: false, msg: 'No callbackURL submitted.'});
-	} else if (request.trigger.relation != "todSunset") {
-		res.json({success: false, msg: 'The relation submitted is not todSunset.'});
 	} else {
 
 		recipesDB.insert(request, function(err, body, header){

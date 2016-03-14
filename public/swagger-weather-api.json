@@ -559,16 +559,7 @@
                     "type": "integer",
                     "description": "Latitude of location",
 					"required": true
-                },
-                "relation": {
-                    "type": "string",
-                    "description": "Type of weather trigger (tempGT)",
-					"required": true
-                },
-				"inThreshold": {
-					"type": "boolean",
-					"description": "Always set to false. Used for limiting the amount of times a recipe can trigger."
-				}
+                }
             }
         },
 		"ltWeather": {
@@ -606,16 +597,7 @@
                     "type": "integer",
                     "description": "Latitude of location",
 					"required": true
-                },
-                "relation": {
-                    "type": "string",
-                    "description": "Type of weather trigger (tempLT)",
-					"required": true
-                },
-				"inThreshold": {
-					"type": "boolean",
-					"description": "Always set to false. Used for limiting the amount of times a recipe can trigger."
-				}
+                }
             }
         },
 		"aWeather": {
@@ -645,15 +627,6 @@
                     "type": "integer",
                     "description": "Latitude of location",
 					"required": true
-                },
-                "relation": {
-                    "type": "string",
-                    "description": "Type of weather trigger (Alert)",
-					"required": true
-                },
-				"prevCond": {
-                    "type": "string",
-                    "description": "Used to limit the amount of times the recipe can trigger. Anything string can be input here."
                 }
             }
         },
@@ -688,16 +661,7 @@
                     "type": "integer",
                     "description": "Latitude of location",
 					"required": true
-                },
-                "relation": {
-                    "type": "string",
-                    "description": "Type of weather trigger (currentWeather)",
-					"required": true
-                },
-				"inThreshold": {
-					"type": "boolean",
-					"description": "Always set to false. Used for limiting the amount of times a recipe can trigger."
-				}
+                }
             }
         },
 		"wcWeather": {
@@ -727,15 +691,6 @@
                     "type": "integer",
                     "description": "Latitude of location",
 					"required": true
-                },
-                "relation": {
-                    "type": "string",
-                    "description": "Type of weather trigger (weatherChange)",
-					"required": true
-                },
-				"prevCond": {
-                    "type": "string",
-                    "description": "Used to limit the amount of times the recipe can trigger. Any string can be put here."
                 }
             }
         },
@@ -769,11 +724,6 @@
 				"lat": {
                     "type": "integer",
                     "description": "Latitude of location",
-					"required": true
-                },
-                "relation": {
-                    "type": "string",
-                    "description": "Type of weather trigger (curForecast)",
 					"required": true
                 }
             }
@@ -809,11 +759,6 @@
                     "type": "integer",
                     "description": "Latitude of location",
 					"required": true
-                },
-                "relation": {
-                    "type": "string",
-                    "description": "Type of weather trigger (tomForecast)",
-					"required": true
                 }
             }
         },
@@ -847,11 +792,6 @@
 				"lat": {
                     "type": "integer",
                     "description": "Latitude of location",
-					"required": true
-                },
-                "relation": {
-                    "type": "string",
-                    "description": "Type of weather trigger (todHumid)",
 					"required": true
                 }
             }
@@ -891,11 +831,6 @@
                     "type": "integer",
                     "description": "Latitude of location",
 					"required": true
-                },
-                "relation": {
-                    "type": "string",
-                    "description": "Type of weather trigger (todWind)",
-					"required": true
                 }
             }
         },
@@ -929,11 +864,6 @@
 				"lat": {
                     "type": "integer",
                     "description": "Latitude of location",
-					"required": true
-                },
-                "relation": {
-                    "type": "string",
-                    "description": "Type of weather trigger (todUV)",
 					"required": true
                 }
             }
@@ -973,11 +903,6 @@
                     "type": "integer",
                     "description": "Latitude of location",
 					"required": true
-                },
-                "relation": {
-                    "type": "string",
-                    "description": "Type of weather trigger (tomLtemp)",
-					"required": true
                 }
             }
         },
@@ -1016,11 +941,6 @@
                     "type": "integer",
                     "description": "Latitude of location",
 					"required": true
-                },
-                "relation": {
-                    "type": "string",
-                    "description": "Type of weather trigger (tomHtemp)",
-					"required": true
                 }
             }
         },
@@ -1051,11 +971,6 @@
                     "type": "integer",
                     "description": "Latitude of location",
 					"required": true
-                },
-                "relation": {
-                    "type": "string",
-                    "description": "Type of weather trigger (todSunrise)",
-					"required": true
                 }
             }
         },
@@ -1085,11 +1000,6 @@
 				"lat": {
                     "type": "integer",
                     "description": "Latitude of location",
-					"required": true
-                },
-                "relation": {
-                    "type": "string",
-                    "description": "Type of weather trigger (todSunset)",
 					"required": true
                 }
             }
