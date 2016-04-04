@@ -10,30 +10,24 @@ var config = new Config('./weather_config.js');
 var me = config.get('CLOUDANT_USERNAME');
 var password = config.get('CLOUDANT_PW');
 var weatherAPIKey = config.get('API_KEY');
+var onitAPIKey = config.get('nsdsApiKey');
 var triggerCallback = "http://nsds-api-stage.mybluemix.net/api/v1/trigger/";
 var cron = require('cron');
 
 var app = express();
 
 var cloudant = Cloudant({account:me, password:password});
-
-// lists all the databases on console
-
-cloudant.db.list(function(err, allDbs){
-	console.log("my dbs: %s", allDbs.join(','))
-});
-
-
 var recipesDB = cloudant.db.use('recipes');
-
 app.use(bodyParser.json());
-// app.use(express.json());
 app.use(express.static(__dirname + '/public'));
+/***
+INIT
+***/
+console.log("The Weather Monitor is Up and Running.");
 
+//Delete End Point
 app.delete('/api/v1/weather/:recipeid', function(req, res){
-	//console.log("weatherRecipe delete hit");
 	var del_ID = req.params.recipeid;
-	//console.log(del_ID);
 	
 	recipesDB.get(del_ID, function(err, data){
 		if(err){
@@ -43,15 +37,20 @@ app.delete('/api/v1/weather/:recipeid', function(req, res){
 			recipesDB.destroy(del_ID, rev,  function(err) {
 				if (!err) {
 					res.json({success: true, msg: 'Successfully deleted the weather recipe from the database.'});
-					console.log("Successfully deleted doc"+ del_ID);
+					//console.log("Successfully deleted doc"+ del_ID);
 				} else {
 					res.json({success: false, msg: 'Failed to delete recipe from the database, please try again.'});
-					//console.log("failed");
 				}
 			});
 		}
 	});
 });
+
+/*************************
+
+WEATHER TRIGGER END POINTS
+
+*************************/
 
 app.post('/api/v1/weather/temperatureGT', function(req, res){
 	var request = req.body;
@@ -506,6 +505,7 @@ function watchTemperature(recipeIDNum){
 			var callback = data.callbackURL;
 			var type = data.trigger.numSystem;
 			var thresh = data.trigger.inThreshold;
+			var currentTemp;
 	
 			// validates relation
 			if(relation != "tempLT" && relation != "tempGT" && relation != "EQ"){
@@ -525,19 +525,31 @@ function watchTemperature(recipeIDNum){
 				if(!err){
 					// Gets the current temperature from response
 					var parsedbody = JSON.parse(body);
-					var currentTemp;
 					if (type == "US") {
 						currentTemp = parsedbody.current_observation.temp_f;
-						console.log("current temp: " + currentTemp);
 					} else {
 						currentTemp = parsedbody.current_observation.temp_c;
-						console.log("current temp: " + currentTemp);
 					}
+					//Ingredients
+					var country = parsedbody.current_observation.observation_location.country;
+					var state = parsedbody.current_observation.observation_location.full;
+					var ingred = {
+						"ingredients_data": {
+							"weather_location": state + ", " +country,
+							"weather_date": parsedbody.current_observation.observation_time,
+							"weather_temperature": currentTemp
+						}
+					}
+					//Headers for callbackURL
+					var headers = {
+						'Content-Type': 'application/json',
+						'nsds-api-key': nsdsApiKey
+					};
+			
 					// Does the appropriate comparison depending on the relation and stores a boolean
 					// value in noise
 					console.log("The watch temperature value: "+targetTemp);
 					if (relation == "tempLT") {
-						console.log("Relation: less than");
 						// does LT relation
 						if(currentTemp < targetTemp){
 							if(thresh == false) {
@@ -545,21 +557,18 @@ function watchTemperature(recipeIDNum){
 								data.trigger.inThreshold = true;
 								recipesDB.insert(data, recipeIDNum, function(err, body, header){
 									if(err){
-										res.send("Error adding recipe.");
+										res.json({success: false, msg: 'Failed to store recipe in database.'});
 									}
 								});
 								// calls callback url
-								console.log("Target hit, calling callback URL...");
 								callback += recipeIDNum;
-								/*request(callback, function(err, response, body){
+								request(callback, { 'headers': headers, 'data': JSON.stringify(ingred)}, function(err, response, body){
 									if(!err){
-										console.log("successfully sent trigger, response body:");
-										console.log(body);
+										res.json({success: true, msg: 'Successfully called back the url.'});
 									}else{
-										console.log(response);
-										throw err;
+										res.json({success: false, msg: 'Failed to call back the url.'});
 									}
-								});*/
+								});
 							}
 						} else if(thresh == true) {
 							// if thresh = true than if temp difference is > 3 than threshold = false
@@ -568,7 +577,7 @@ function watchTemperature(recipeIDNum){
 								data.trigger.inThreshold = false;
 								recipesDB.insert(data, recipeIDNum, function(err, body, header){
 									if(err){
-										res.send("Error adding recipe.");
+										res.json({success: false, msg: 'Failed to store recipe in database.'});
 									}
 								});
 							} 
@@ -582,21 +591,18 @@ function watchTemperature(recipeIDNum){
 								data.trigger.inThreshold = true;
 								recipesDB.insert(data, recipeIDNum, function(err, body, header){
 									if(err){
-										res.send("Error adding recipe.");
+										res.json({success: false, msg: 'Failed to store recipe in database.'});
 									}
 								});
 								// calls callback url
-								console.log("Target hit, calling callback URL...");
 								callback += recipeIDNum;
-								/*request(callback, function(err, response, body){
+								request(callback, { 'headers': headers, 'data': JSON.stringify(ingred)}, function(err, response, body){
 									if(!err){
-										console.log("successfully sent trigger, response body:");
-										console.log(body);
+										res.json({success: true, msg: 'Successfully called back the url.'});
 									}else{
-										console.log(response);
-										throw err;
+										res.json({success: false, msg: 'Failed to call back the url.'});
 									}
-								});*/
+								});
 							}
 						} else if(thresh == true) {
 							// if thresh = true than if temp difference is > 3 than threshold = false
@@ -605,30 +611,12 @@ function watchTemperature(recipeIDNum){
 								data.trigger.inThreshold = false;
 								recipesDB.insert(data, recipeIDNum, function(err, body, header){
 									if(err){
-										res.send("Error adding recipe.");
+										res.json({success: false, msg: 'Failed to store recipe in database.'});
 									}
 								});
 							} 
 						}
-					} /*else if (relation == "EQ") {
-						// does EQ relation
-						if(currentTemp == targetTemp){
-							console.log("Target hit, calling callback URL...");
-							callback += recipeIDNum;
-							request(callback, function(err, response, body){
-								if(!err){
-									console.log("successfully sent trigger, response body:");
-									console.log(body);
-								}else{
-									console.log(response);
-									throw err;
-								}
-							});
-							noise = false;
-						} else {
-							noise = true;
-						}
-					}*/
+					} 
 				}else{
 					console.log(response);
 					throw err;
@@ -664,9 +652,8 @@ function watchAlert(recipeIDNum){
 
 			// Sets ups request from weather api
 			requestURL = "http://api.wunderground.com/api/"
-			requestURL += weatherAPIKey + "/alerts/q/"
+			requestURL += weatherAPIKey + "/alerts/conditions/q/"
 			requestURL += coord + ".json";
-			// console.log(requestURL);
 
 			// sends the request to the weather api and parses through the response 
 			// for the wanted information and does the comparison
@@ -675,7 +662,21 @@ function watchAlert(recipeIDNum){
 					// Gets the current alert description from response
 					var parsedbody = JSON.parse(body);
 					var currentAlert = parsedbody.alerts.description;
-					console.log("current weather alerts: " + currentAlert);
+					//Ingredients
+					var country = parsedbody.current_observation.observation_location.country;
+					var state = parsedbody.current_observation.observation_location.full;
+					var ingred = {
+						"ingredients_data": {
+							"weather_location": state + ", " +country,
+							"weather_date": parsedbody.alerts.date,
+							"weather_advisory": currentAlert
+						}
+					}
+					//Headers for callbackURL
+					var headers = {
+						'Content-Type': 'application/json',
+						'nsds-api-key': nsdsApiKey
+					};
 					if (currentAlert === undefined) {
 						//Do nothing if there is no alert description (meaning no alert)
 						if (thresh != "none") {
@@ -683,7 +684,7 @@ function watchAlert(recipeIDNum){
 							data.trigger.prevCond = "none";
 							recipesDB.insert(data, recipeIDNum, function(err, body, header){
 								if(err){
-									res.send("Error adding recipe.");
+									res.json({success: false, msg: 'Failed to store recipe in database.'});
 								}
 							});
 						}
@@ -694,21 +695,19 @@ function watchAlert(recipeIDNum){
 							data.trigger.prevCond = currentAlert;
 							recipesDB.insert(data, recipeIDNum, function(err, body, header){
 								if(err){
-									res.send("Error adding recipe.");
+									res.json({success: false, msg: 'Failed to store recipe in database.'});
 								}
 							});
 							// sets off trigger
 							console.log("Target hit, calling callback URL...");
 							callback += recipeIDNum;
-							/*request(callback, function(err, response, body){
+							request(callback, { 'headers': headers, 'data': JSON.stringify(ingred)}, function(err, response, body){
 								if(!err){
-									console.log("successfully sent trigger, response body:");
-									console.log(body);
+									res.json({success: true, msg: 'Successfully called back the url.'});
 								}else{
-									console.log(response);
-									throw err;
+									res.json({success: false, msg: 'Failed to call back the url.'});
 								}
-							});*/
+							});
 						}
 					}
 				}else{
@@ -748,7 +747,6 @@ function watchCurWeather(recipeIDNum) {
 			requestURL = "http://api.wunderground.com/api/"
 			requestURL += weatherAPIKey + "/conditions/q/"
 			requestURL += coord + ".json";
-			// console.log(requestURL);
 
 			// sends the request to the weather api and parses through the response 
 			// for the wanted information and does the comparison
@@ -758,6 +756,21 @@ function watchCurWeather(recipeIDNum) {
 					var parsedbody = JSON.parse(body);
 					var curWeather = parsedbody.current_observation.weather;
 					console.log("current weather: " + curWeather + "\n" + "Weather Condition: " + weatherCond);
+					//Ingredients
+					var country = parsedbody.current_observation.observation_location.country;
+					var state = parsedbody.current_observation.observation_location.full;
+					var ingred = {
+						"ingredients_data": {
+							"weather_location": state + ", " +country,
+							"weather_date": parsedbody.current_observation.observation_time,
+							"weather_current": curWeather
+						}
+					}
+					//Headers for callbackURL
+					var headers = {
+						'Content-Type': 'application/json',
+						'nsds-api-key': nsdsApiKey
+					};
 					// checks if the current weather string contains the string
 					// of the wanted condition
 					var check = -1;
@@ -777,28 +790,26 @@ function watchCurWeather(recipeIDNum) {
 							data.trigger.inThreshold = true;
 							recipesDB.insert(data, recipeIDNum, function(err, body, header){
 								if(err){
-									res.send("Error adding recipe.");
+									res.json({success: false, msg: 'Failed to store recipe in database.'});
 								}
 							});
 							//calls callback url
 							console.log("Target hit, calling callback URL...");
 							callback += recipeIDNum;
-							/*request(callback, function(err, response, body){
+							request(callback, { 'headers': headers, 'data': JSON.stringify(ingred)}, function(err, response, body){
 								if(!err){
-									console.log("successfully sent trigger, response body:");
-									console.log(body);
+									res.json({success: true, msg: 'Successfully called back the url.'});
 								}else{
-									console.log(response);
-									throw err;
-									}
-							});*/
+									res.json({success: false, msg: 'Failed to call back the url.'});
+								}
+							});
 						}
 					} else if (thresh == true){
 						// changes threshold value to false
 						data.trigger.inThreshold = false;
 						recipesDB.insert(data, recipeIDNum, function(err, body, header){
 							if(err){
-								res.send("Error adding recipe.");
+								res.json({success: false, msg: 'Failed to store recipe in database.'});
 							}
 						});
 					}
@@ -838,7 +849,6 @@ function watchWeather(recipeIDNum) {
 			requestURL = "http://api.wunderground.com/api/"
 			requestURL += weatherAPIKey + "/conditions/q/"
 			requestURL += coord + ".json";
-			// console.log(requestURL);
 
 			// sends the request to the weather api and parses through the response 
 			// for the wanted information and does the comparison
@@ -847,7 +857,21 @@ function watchWeather(recipeIDNum) {
 					// Gets the current alerts from response
 					var parsedbody = JSON.parse(body);
 					var curWeather = parsedbody.current_observation.weather;
-					console.log("Current weather: " + curWeather + ", Previous weather conditions: "+thresh);
+					//Ingredients
+					var country = parsedbody.current_observation.observation_location.country;
+					var state = parsedbody.current_observation.observation_location.full;
+					var ingred = {
+						"ingredients_data": {
+							"weather_location": state + ", " +country,
+							"weather_date": parsedbody.current_observation.observation_time,
+							"weather_current": curWeather
+						}
+					}
+					//Headers for callbackURL
+					var headers = {
+						'Content-Type': 'application/json',
+						'nsds-api-key': nsdsApiKey
+					};
 					
 					// if the current weather is different from the past weather set off trigger
 					if ( curWeather != thresh)  {
@@ -855,20 +879,18 @@ function watchWeather(recipeIDNum) {
 						data.trigger.prevCond = curWeather;
 						recipesDB.insert(data, recipeIDNum, function(err, body, header){
 							if(err){
-								res.send("Error adding recipe.");
+								res.json({success: false, msg: 'Failed to store recipe in database.'});
 							}
 						});
 						console.log("Target hit, calling callback URL...");
 						callback += recipeIDNum;
-						/*request(callback, function(err, response, body){
-							if(!err){
-								console.log("successfully sent trigger, response body:");
-								console.log(body);
-							}else{
-								console.log(response);
-								throw err;
-							}
-						});*/
+						request(callback, { 'headers': headers, 'data': JSON.stringify(ingred)}, function(err, response, body){
+								if(!err){
+									res.json({success: true, msg: 'Successfully called back the url.'});
+								}else{
+									res.json({success: false, msg: 'Failed to call back the url.'});
+								}
+							});
 					} 
 				} else {
 					console.log(response);
@@ -904,7 +926,7 @@ function todaysWeather(recipeIDNum) {
 
 			// Sets ups request from weather api
 			requestURL = "http://api.wunderground.com/api/"
-			requestURL += weatherAPIKey + "/forecast10day/q/"
+			requestURL += weatherAPIKey + "/forecast10day/conditions/q/"
 			requestURL += coord + ".json";
 
 			// sends the request to the weather api and parses through the response 
@@ -919,19 +941,33 @@ function todaysWeather(recipeIDNum) {
 					} else {
 						curWeather = parsedbody.forecast.txt_forecast.forecastday[0].fcttext_metric;
 					}
+					//Ingredients
+					var country = parsedbody.current_observation.observation_location.country;
+					var state = parsedbody.current_observation.observation_location.full;
+					var ingred = {
+						"ingredients_data": {
+							"weather_location": state + ", " +country,
+							"weather_date": parsedbody.forecast.simpleforecast.forecastday[0].pretty,
+							"weather_current": curWeather
+						}
+					}
+					//Headers for callbackURL
+					var headers = {
+						'Content-Type': 'application/json',
+						'nsds-api-key': nsdsApiKey
+					};
+					
 					//Always sets off trigger
 					console.log(curWeather);
 					console.log("Target hit, calling callback URL...");
 					callback += recipeIDNum;
-					/*request(callback, function(err, response, body){
-						if(!err){
-							console.log("successfully sent trigger, response body:");
-							console.log(body);
-						}else{
-							console.log(response);
-							throw err;
-						}
-					});*/
+					request(callback, { 'headers': headers, 'data': JSON.stringify(ingred)}, function(err, response, body){
+								if(!err){
+									res.json({success: true, msg: 'Successfully called back the url.'});
+								}else{
+									res.json({success: false, msg: 'Failed to call back the url.'});
+								}
+							});
 				} else {
 					console.log("ERROR:");
 					console.log(response);
@@ -967,7 +1003,7 @@ function tomWeather(recipeIDNum) {
 
 			// Sets ups request from weather api
 			requestURL = "http://api.wunderground.com/api/"
-			requestURL += weatherAPIKey + "/forecast10day/q/"
+			requestURL += weatherAPIKey + "/forecast10day/conditions/q/"
 			requestURL += coord + ".json";
 			// console.log(requestURL);
 
@@ -983,19 +1019,32 @@ function tomWeather(recipeIDNum) {
 					} else {
 						tomWeather = parsedbody.forecast.txt_forecast.forecastday[2].fcttext_metric;
 					}
+					//Ingredients
+					var country = parsedbody.current_observation.observation_location.country;
+					var state = parsedbody.current_observation.observation_location.full;
+					var ingred = {
+						"ingredients_data": {
+							"weather_location": state + ", " +country,
+							"weather_date": parsedbody.forecast.simpleforecast.forecastday[2].pretty,
+							"weather_tomorrow": tomWeather
+						}
+					}
+					//Headers for callbackURL
+					var headers = {
+						'Content-Type': 'application/json',
+						'nsds-api-key': nsdsApiKey
+					};
 					//Always sets off trigger
 					console.log(tomWeather);
 					console.log("Target hit, calling callback URL...");
 					callback += recipeIDNum;
-					/*request(callback, function(err, response, body){
-						if(!err){
-							console.log("successfully sent trigger, response body:");
-							console.log(body);
-						}else{
-							console.log(response);
-							throw err;
-						}
-					});*/
+					request(callback, { 'headers': headers, 'data': JSON.stringify(ingred)}, function(err, response, body){
+								if(!err){
+									res.json({success: true, msg: 'Successfully called back the url.'});
+								}else{
+									res.json({success: false, msg: 'Failed to call back the url.'});
+								}
+							});
 				} else {
 					console.log(response);
 					throw err;
@@ -1031,7 +1080,7 @@ function tomHighTemp(recipeIDNum) {
 
 			// Sets ups request from weather api
 			requestURL = "http://api.wunderground.com/api/"
-			requestURL += weatherAPIKey + "/forecast10day/q/"
+			requestURL += weatherAPIKey + "/forecast10day/conditions/q/"
 			requestURL += coord + ".json";
 			// console.log(requestURL);
 
@@ -1043,24 +1092,37 @@ function tomHighTemp(recipeIDNum) {
 					var parsedbody = JSON.parse(body);
 					var tomHigh;
 					if (type == "US") {
-						tomHigh = parsedbody.forecast.simpleforecast.forecastday[1].high.fahrenheit;
+						tomHigh = parsedbody.forecast.simpleforecast.forecastday[2].high.fahrenheit;
 					} else {
-						tomHigh = parsedbody.forecast.simpleforecast.forecastday[1].high.celsius;
+						tomHigh = parsedbody.forecast.simpleforecast.forecastday[2].high.celsius;
 					}
+					//Ingredients
+					var country = parsedbody.current_observation.observation_location.country;
+					var state = parsedbody.current_observation.observation_location.full;
+					var ingred = {
+						"ingredients_data": {
+							"weather_location": state + ", " +country,
+							"weather_date": parsedbody.forecast.simpleforecast.forecastday[2].pretty,
+							"weather_temperature": tomHigh
+						}
+					}
+					//Headers for callbackURL
+					var headers = {
+						'Content-Type': 'application/json',
+						'nsds-api-key': nsdsApiKey
+					};
 					console.log("Is tomorrows high temp of "+tomHigh+" greater than "+temp);
 					// If tomorrows High > x than set off trigger
 					if (temp < tomHigh) {
 						console.log("Target hit, calling callback URL...");
 						callback += recipeIDNum;
-						/*request(callback, function(err, response, body){
-							if(!err){
-								console.log("successfully sent trigger, response body:");
-								console.log(body);
-							}else{
-								console.log(response);
-								throw err;
-							}
-						});*/
+						request(callback, { 'headers': headers, 'data': JSON.stringify(ingred)}, function(err, response, body){
+								if(!err){
+									res.json({success: true, msg: 'Successfully called back the url.'});
+								}else{
+									res.json({success: false, msg: 'Failed to call back the url.'});
+								}
+							});
 					}
 				} else {
 					console.log(response);
@@ -1097,7 +1159,7 @@ function tomLowTemp(recipeIDNum) {
 
 			// Sets ups request from weather api
 			requestURL = "http://api.wunderground.com/api/"
-			requestURL += weatherAPIKey + "/forecast10day/q/"
+			requestURL += weatherAPIKey + "/forecast10day/conditions/q/"
 			requestURL += coord + ".json";
 			// console.log(requestURL);
 
@@ -1109,24 +1171,37 @@ function tomLowTemp(recipeIDNum) {
 					var parsedbody = JSON.parse(body);
 					var tomLow;
 					if (type == "US") {
-						tomLow = parsedbody.forecast.simpleforecast.forecastday[1].low.fahrenheit;
+						tomLow = parsedbody.forecast.simpleforecast.forecastday[2].low.fahrenheit;
 					} else {
-						tomLow = parsedbody.forecast.simpleforecast.forecastday[1].low.celsius;
+						tomLow = parsedbody.forecast.simpleforecast.forecastday[2].low.celsius;
 					}
+					//Ingredients
+					var country = parsedbody.current_observation.observation_location.country;
+					var state = parsedbody.current_observation.observation_location.full;
+					var ingred = {
+						"ingredients_data": {
+							"weather_location": state + ", " +country,
+							"weather_date": parsedbody.forecast.simpleforecast.forecastday[2].pretty,
+							"weather_temperature": tomLow
+						}
+					}
+					//Headers for callbackURL
+					var headers = {
+						'Content-Type': 'application/json',
+						'nsds-api-key': nsdsApiKey
+					};
 					console.log("Is tomorrows low temp of "+tomLow+" less than "+temp);
 					// If tomorrows Low < x than set off trigger
 					if (temp > tomLow) {
 						console.log("Target hit, calling callback URL...");
 						callback += recipeIDNum;
-						/*request(callback, function(err, response, body){
-							if(!err){
-								console.log("successfully sent trigger, response body:");
-								console.log(body);
-							}else{
-								console.log(response);
-								throw err;
-							}
-						});*/
+						request(callback, { 'headers': headers, 'data': JSON.stringify(ingred)}, function(err, response, body){
+								if(!err){
+									res.json({success: true, msg: 'Successfully called back the url.'});
+								}else{
+									res.json({success: false, msg: 'Failed to call back the url.'});
+								}
+							});
 					}
 				} else {
 					console.log(response);
@@ -1163,7 +1238,7 @@ function todayWind(recipeIDNum) {
 
 			// Sets ups request from weather api
 			requestURL = "http://api.wunderground.com/api/"
-			requestURL += weatherAPIKey + "/forecast10day/q/"
+			requestURL += weatherAPIKey + "/forecast10day/conditions/q/"
 			requestURL += coord + ".json";
 			// console.log(requestURL);
 
@@ -1175,25 +1250,39 @@ function todayWind(recipeIDNum) {
 					var parsedbody = JSON.parse(body);
 					var maxWind;
 					if (type == "US") {
-						maxWind = parsedbody.forecast.simpleforecast.forecastday[1].maxwind.mph;
+						maxWind = parsedbody.forecast.simpleforecast.forecastday[2].maxwind.mph;
 					} else {
-						maxWind = parsedbody.forecast.simpleforecast.forecastday[1].maxwind.kph;
+						maxWind = parsedbody.forecast.simpleforecast.forecastday[2].maxwind.kph;
 					}
+					//Ingredients
+					var country = parsedbody.current_observation.observation_location.country;
+					var state = parsedbody.current_observation.observation_location.full;
+					var ingred = {
+						"ingredients_data": {
+							"weather_location": state + ", " +country,
+							"weather_date": parsedbody.forecast.simpleforecast.forecastday[2].pretty,
+							"weather_wind": maxWind,
+							"weather_wind_direction": parsedbody.forecast.simpleforecast.forecastday[2].maxwind.dir 
+						}
+					}
+					//Headers for callbackURL
+					var headers = {
+						'Content-Type': 'application/json',
+						'nsds-api-key': nsdsApiKey
+					};
 					//direction is "".maxwind.dir if needed;
 					console.log("Is tomorrows wind speed of "+maxWind+" greater than "+windSpeed);
 					// If tomorrows Low < x than set off trigger
 					if (maxWind > windSpeed) {
 						console.log("Target hit, calling callback URL...");
 						callback += recipeIDNum;
-						/*request(callback, function(err, response, body){
-							if(!err){
-								console.log("successfully sent trigger, response body:");
-								console.log(body);
-							}else{
-								console.log(response);
-								throw err;
-							}
-						});*/
+						request(callback, { 'headers': headers, 'data': JSON.stringify(ingred)}, function(err, response, body){
+								if(!err){
+									res.json({success: true, msg: 'Successfully called back the url.'});
+								}else{
+									res.json({success: false, msg: 'Failed to call back the url.'});
+								}
+							});
 					}
 				} else {
 					console.log(response);
@@ -1229,7 +1318,7 @@ function todayHumid(recipeIDNum) {
 
 			// Sets ups request from weather api
 			requestURL = "http://api.wunderground.com/api/"
-			requestURL += weatherAPIKey + "/forecast10day/q/"
+			requestURL += weatherAPIKey + "/forecast10day/conditions/q/"
 			requestURL += coord + ".json";
 			// console.log(requestURL);
 
@@ -1239,21 +1328,34 @@ function todayHumid(recipeIDNum) {
 				if(!err){
 					// Gets tomorrows weather forecast
 					var parsedbody = JSON.parse(body);
-					var maxHumid = parsedbody.forecast.simpleforecast.forecastday[1].maxhumidity;
+					var maxHumid = parsedbody.forecast.simpleforecast.forecastday[2].maxhumidity;
+					//Ingredients
+					var country = parsedbody.current_observation.observation_location.country;
+					var state = parsedbody.current_observation.observation_location.full;
+					var ingred = {
+						"ingredients_data": {
+							"weather_location": state + ", " +country,
+							"weather_date": parsedbody.forecast.simpleforecast.forecastday[2].pretty,
+							"weather_humidity": maxHumid
+						}
+					}
+					//Headers for callbackURL
+					var headers = {
+						'Content-Type': 'application/json',
+						'nsds-api-key': nsdsApiKey
+					};
 					// If tomorrows Low < x than set off trigger
 					console.log("Is tomorrows humidity of "+maxHumid+" greater than "+humid);
 					if (maxHumid > humid) {
 						console.log("Target hit, calling callback URL...");
 						callback += recipeIDNum;
-						/*request(callback, function(err, response, body){
-							if(!err){
-								console.log("successfully sent trigger, response body:");
-								console.log(body);
-							}else{
-								console.log(response);
-								throw err;
-							}
-						});*/
+						request(callback, { 'headers': headers, 'data': JSON.stringify(ingred)}, function(err, response, body){
+								if(!err){
+									res.json({success: true, msg: 'Successfully called back the url.'});
+								}else{
+									res.json({success: false, msg: 'Failed to call back the url.'});
+								}
+							});
 					}
 				} else {
 					console.log(response);
@@ -1300,20 +1402,33 @@ function todayUV(recipeIDNum) {
 					// Gets tomorrows weather forecast
 					var parsedbody = JSON.parse(body);
 					var curUV = parsedbody.current_observation.UV;
+					//Ingredients
+					var country = parsedbody.current_observation.observation_location.country;
+					var state = parsedbody.current_observation.observation_location.full;
+					var ingred = {
+						"ingredients_data": {
+							"weather_location": state + ", " +country,
+							"weather_date": parsedbody.current_observation.observation_time,
+							"weather_UV": curUV
+						}
+					}
+					//Headers for callbackURL
+					var headers = {
+						'Content-Type': 'application/json',
+						'nsds-api-key': nsdsApiKey
+					};
 					// If tomorrows Low < x than set off trigger
 					console.log("Is tomorrows UV of "+curUV+" greater than "+uv);
 					if (curUV > uv) {
 						console.log("Target hit, calling callback URL...");
 						callback += recipeIDNum;
-						/*request(callback, function(err, response, body){
-							if(!err){
-								console.log("successfully sent trigger, response body:");
-								console.log(body);
-							}else{
-								console.log(response);
-								throw err;
-							}
-						});*/
+						request(callback, { 'headers': headers, 'data': JSON.stringify(ingred)}, function(err, response, body){
+								if(!err){
+									res.json({success: true, msg: 'Successfully called back the url.'});
+								}else{
+									res.json({success: false, msg: 'Failed to call back the url.'});
+								}
+							});
 					}
 				} else {
 					console.log(response);
@@ -1348,7 +1463,7 @@ function todaySun(recipeIDNum) {
 
 			// Sets ups request from weather api
 			requestURL = "http://api.wunderground.com/api/"
-			requestURL += weatherAPIKey + "/astronomy/q/"
+			requestURL += weatherAPIKey + "/astronomy/conditions/q/"
 			requestURL += coord + ".json";
 			// console.log(requestURL);
 			
@@ -1363,23 +1478,36 @@ function todaySun(recipeIDNum) {
 					if ("todSunrise" == relation) {
 						todaySunHour = parsedbody.moon_phase.sunrise.hour;
 						todaySunMin = parsedbody.moon_phase.sunrise.minute;
-						console.log("Todays sunrise wil be at "+todaySunHour+":"+todaySunMin);
+						//console.log("Todays sunrise wil be at "+todaySunHour+":"+todaySunMin);
 					} else {
 						todaySunHour = parsedbody.moon_phase.sunset.hour;
 						todaySunMin = parsedbody.moon_phase.sunset.minute;
-						console.log("Todays sunset wil be at "+todaySunHour+":"+todaySunMin);
+						//console.log("Todays sunset wil be at "+todaySunHour+":"+todaySunMin);
 					}
+					//Ingredients
+					var country = parsedbody.current_observation.observation_location.country;
+					var state = parsedbody.current_observation.observation_location.full;
+					var ingred = {
+						"ingredients_data": {
+							"weather_location": state + ", " +country,
+							"weather_date": parsedbody.current_observation.observation_time,
+							"weather_sun": todaySunHour+":"+todaySunMin
+						}
+					}
+					//Headers for callbackURL
+					var headers = {
+						'Content-Type': 'application/json',
+						'nsds-api-key': nsdsApiKey
+					};
 					console.log("Target hit, calling callback URL...");
 					callback += recipeIDNum;
-					/*request(callback, function(err, response, body){
-						if(!err){
-							console.log("successfully sent trigger, response body:");
-							console.log(body);
-						}else{
-							console.log(response);
-							throw err;
-						}
-					});*/
+					request(callback, { 'headers': headers, 'data': JSON.stringify(ingred)}, function(err, response, body){
+								if(!err){
+									res.json({success: true, msg: 'Successfully called back the url.'});
+								}else{
+									res.json({success: false, msg: 'Failed to call back the url.'});
+								}
+							});
 				} else {
 					console.log(response);
 					throw err;
