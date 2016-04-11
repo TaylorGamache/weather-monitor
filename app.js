@@ -20,12 +20,127 @@ var cloudant = Cloudant({account:me, password:password});
 var recipesDB = cloudant.db.use('recipes');
 app.use(bodyParser.json());
 app.use(express.static(__dirname + '/public'));
-/***
-INIT
-***/
-console.log("The Weather Monitor is Up and Running.");
 
-//Delete End Point
+		/*************
+
+			INIT
+
+		*************/
+		
+var allDocs = {"selector": { "_id": { "$gt": 0}}};
+recipesDB.find(allDocs ,function(err, result){
+	if (err) {
+		throw err;
+	} 
+	console.log('Found %d JSONs at startup.', result.docs.length);
+	for (var i = 0; i < result.docs.length; i++) {
+		//Finds all recipes and only runs weather recipes
+		var idNum = result.docs[i]._id;
+		var relation = result.docs[i].trigger.relation;
+		if (relation == "tempGT" || relation == "tempLT") {
+			// Runs watch for Temperature every 4 hours at the start of the hour
+			//var cronJob = cron.job("0 0 */4 * * *", function(){
+			var cronJob = cron.job("0 */1 * * * *", function(){
+				watchTemperature(idNum);
+			});
+			cronJob.start();
+		} else	if (relation == "Alert") {
+			//console.log("in alert")
+			// Runs watch for weather advisories every 1 hour at the start of the hour
+			//var cronJob = cron.job("0 0 */1 * * *", function() {
+			var cronJob = cron.job("0 */1 * * * *", function(){
+				watchAlert(idNum);
+			});
+			cronJob.start();
+		} else if (relation == "currentWeather") {
+			// Runs watch for weather every 1 hour at the start of the hour
+			//var cronJob = cron.job("0 0 */1 * * *", function() {
+			var cronJob = cron.job("0 */1 * * * *", function(){
+				watchCurWeather(idNum);
+			});
+			cronJob.start();
+		} else if (relation == "weatherChange") {
+			// Runs watch for weather every 1 hour at the start of the hour
+			//var cronJob = cron.job("0 0 */1 * * *", function(){
+			var cronJob = cron.job("0 */1 * * * *", function(){
+				watchWeather(idNum);
+			});
+			cronJob.start();
+		} else if (relation == "curForecast") {
+			// Runs every day at 4 am
+			//var cronJob = cron.job("0 0 4 */1 * *", function(){
+			var cronJob = cron.job("0 */1 * * * *", function(){
+				todaysWeather(idNum);
+			});
+			cronJob.start();
+		} else if (relation == "tomForecast") {
+			// Runs every day at noon
+			//var cronJob = cron.job("0 0 12 */1 * *", function(){
+			var cronJob = cron.job("0 */1 * * * *", function(){
+				tomWeather(idNum);
+			});
+			cronJob.start();
+		} else if (relation == "tomHtemp") {
+			// Runs every day at noon
+			//var cronJob = cron.job("0 0 12 */1 * *", function(){
+			var cronJob = cron.job("0 */1 * * * *", function(){
+				tomHighTemp(idNum);
+			});
+			cronJob.start();
+		} else if (relation == "tomLtemp") {
+			// Runs every day at noon
+			//var cronJob = cron.job("0 0 12 */1 * *", function(){
+			var cronJob = cron.job("0 */1 * * * *", function(){
+				tomLowTemp(idNum);
+			});
+			cronJob.start();
+		} else if (relation == "todHumid") {
+			// Runs every day at 5 am
+			//var cronJob = cron.job("0 0 5 */1 * *", function(){
+			var cronJob = cron.job("0 */1 * * * *", function(){
+				todayHumid(idNum);
+			});
+			cronJob.start();
+		} else if (relation == "todWind") {
+			// Runs every day at 5 am
+			//var cronJob = cron.job("0 0 5 */1 * *", function(){
+			var cronJob = cron.job("0 */1 * * * *", function(){
+				todayWind(idNum);
+			});
+			cronJob.start();
+		} else if (relation == "todUV") {
+			// Runs every day at noon
+			//var cronJob = cron.job("0 0 12 */1 * *", function(){
+			var cronJob = cron.job("0 */1 * * * *", function(){
+				todayUV(idNum);
+			});
+			cronJob.start();
+		} else if (relation == "todSunrise" || relation == "todSunset") {
+			// Runs every day at noon
+			//var cronJob = cron.job("0 0 12 */1 * *", function(){
+			var cronJob = cron.job("0 */1 * * * *", function(){
+				todaySun(idNum);
+			});
+			cronJob.start();
+		}
+	}
+	console.log("The Weather Monitor is Up and Running.");
+});
+
+//temp
+app.post('/temp/:recipeid', function(req, res){
+	console.log("Callback has been reached.");
+	var rec_ID = req.params.recipeid;
+	console.log(rec_ID);
+	console.log(req.headers);
+	console.log(req.body);
+});
+/***************
+
+DELETE END POINT
+
+****************/
+
 app.delete('/api/v1/weather/:recipeid', function(req, res){
 	var del_ID = req.params.recipeid;
 	
@@ -521,7 +636,7 @@ function watchTemperature(recipeIDNum){
 
 			// sends the request to the weather api and parses through the response 
 			// for the wanted information and does the comparison
-			request(requestURL, function(err, response, body){
+			request(requestURL, function(err, resp, body){
 				if(!err){
 					// Gets the current temperature from response
 					var parsedbody = JSON.parse(body);
@@ -540,15 +655,16 @@ function watchTemperature(recipeIDNum){
 							"weather_temperature": currentTemp
 						}
 					}
+					ingred = JSON.stringify(ingred);
 					//Headers for callbackURL
 					var headers = {
 						'Content-Type': 'application/json',
-						'nsds-api-key': nsdsApiKey
+						'nsds-api-key': onitAPIKey
 					};
 			
 					// Does the appropriate comparison depending on the relation and stores a boolean
 					// value in noise
-					console.log("The watch temperature value: "+targetTemp);
+					//console.log("The watch temperature value: "+targetTemp);
 					if (relation == "tempLT") {
 						// does LT relation
 						if(currentTemp < targetTemp){
@@ -557,18 +673,17 @@ function watchTemperature(recipeIDNum){
 								data.trigger.inThreshold = true;
 								recipesDB.insert(data, recipeIDNum, function(err, body, header){
 									if(err){
-										res.json({success: false, msg: 'Failed to store recipe in database.'});
+										resp.json({success: false, msg: 'Failed to store recipe in database.'});
 									}
 								});
 								// calls callback url
-								callback += recipeIDNum;
-								request(callback, { 'headers': headers, 'data': JSON.stringify(ingred)}, function(err, response, body){
-									if(!err){
-										res.json({success: true, msg: 'Successfully called back the url.'});
-									}else{
-										res.json({success: false, msg: 'Failed to call back the url.'});
+								callback = callback + "/" + recipeIDNum;
+								request.post(callback, { 'headers': headers, 'body': ingred}, function(eRR,httpResponse,body) {
+									if(eRR) {
+										resp.json({success: false, msg: 'Failed to reach callback url.'});
 									}
 								});
+									
 							}
 						} else if(thresh == true) {
 							// if thresh = true than if temp difference is > 3 than threshold = false
@@ -577,30 +692,28 @@ function watchTemperature(recipeIDNum){
 								data.trigger.inThreshold = false;
 								recipesDB.insert(data, recipeIDNum, function(err, body, header){
 									if(err){
-										res.json({success: false, msg: 'Failed to store recipe in database.'});
+										resp.json({success: false, msg: 'Failed to store recipe in database.'});
 									}
 								});
 							} 
 						}
 					} else if (relation == "tempGT") {
 						// does GT relation
-						console.log("Relation: greater than");
 						if(currentTemp > targetTemp){
 							if(thresh == false) {
 								// changes threshold value to true
 								data.trigger.inThreshold = true;
 								recipesDB.insert(data, recipeIDNum, function(err, body, header){
 									if(err){
-										res.json({success: false, msg: 'Failed to store recipe in database.'});
+										resp.json({success: false, msg: 'Failed to store recipe in database.'});
 									}
 								});
 								// calls callback url
-								callback += recipeIDNum;
-								request(callback, { 'headers': headers, 'data': JSON.stringify(ingred)}, function(err, response, body){
-									if(!err){
-										res.json({success: true, msg: 'Successfully called back the url.'});
-									}else{
-										res.json({success: false, msg: 'Failed to call back the url.'});
+								callback = callback + "/" + recipeIDNum;
+								request.post(callback, { 'headers': headers, 'body': ingred}, function(eRR,httpResponse,body) {
+									//console.log(body);
+									if(eRR) {
+										resp.json({success: false, msg: 'Failed to reach callback url.'});
 									}
 								});
 							}
@@ -611,7 +724,7 @@ function watchTemperature(recipeIDNum){
 								data.trigger.inThreshold = false;
 								recipesDB.insert(data, recipeIDNum, function(err, body, header){
 									if(err){
-										res.json({success: false, msg: 'Failed to store recipe in database.'});
+										resp.json({success: false, msg: 'Failed to store recipe in database.'});
 									}
 								});
 							} 
@@ -675,7 +788,7 @@ function watchAlert(recipeIDNum){
 					//Headers for callbackURL
 					var headers = {
 						'Content-Type': 'application/json',
-						'nsds-api-key': nsdsApiKey
+						'nsds-api-key': onitAPIKey
 					};
 					if (currentAlert === undefined) {
 						//Do nothing if there is no alert description (meaning no alert)
@@ -700,14 +813,12 @@ function watchAlert(recipeIDNum){
 							});
 							// sets off trigger
 							console.log("Target hit, calling callback URL...");
-							callback += recipeIDNum;
-							request(callback, { 'headers': headers, 'data': JSON.stringify(ingred)}, function(err, response, body){
-								if(!err){
-									res.json({success: true, msg: 'Successfully called back the url.'});
-								}else{
-									res.json({success: false, msg: 'Failed to call back the url.'});
-								}
-							});
+							callback = callback + "/" + recipeIDNum;
+							request.post(callback, { 'headers': headers, 'body': JSON.stringify(ingred)}, function(eRR,httpResponse,body) {
+									if(eRR) {
+										resp.json({success: false, msg: 'Failed to reach callback url.'});
+									}
+								});
 						}
 					}
 				}else{
@@ -769,7 +880,7 @@ function watchCurWeather(recipeIDNum) {
 					//Headers for callbackURL
 					var headers = {
 						'Content-Type': 'application/json',
-						'nsds-api-key': nsdsApiKey
+						'nsds-api-key': onitAPIKey
 					};
 					// checks if the current weather string contains the string
 					// of the wanted condition
@@ -795,14 +906,12 @@ function watchCurWeather(recipeIDNum) {
 							});
 							//calls callback url
 							console.log("Target hit, calling callback URL...");
-							callback += recipeIDNum;
-							request(callback, { 'headers': headers, 'data': JSON.stringify(ingred)}, function(err, response, body){
-								if(!err){
-									res.json({success: true, msg: 'Successfully called back the url.'});
-								}else{
-									res.json({success: false, msg: 'Failed to call back the url.'});
-								}
-							});
+							callback = callback + "/" + recipeIDNum ;
+							request.post(callback, { 'headers': headers, 'body': ingred}, function(eRR,httpResponse,body) {
+									if(eRR) {
+										resp.json({success: false, msg: 'Failed to reach callback url.'});
+									}
+								});
 						}
 					} else if (thresh == true){
 						// changes threshold value to false
@@ -870,7 +979,7 @@ function watchWeather(recipeIDNum) {
 					//Headers for callbackURL
 					var headers = {
 						'Content-Type': 'application/json',
-						'nsds-api-key': nsdsApiKey
+						'nsds-api-key': onitAPIKey
 					};
 					
 					// if the current weather is different from the past weather set off trigger
@@ -883,14 +992,12 @@ function watchWeather(recipeIDNum) {
 							}
 						});
 						console.log("Target hit, calling callback URL...");
-						callback += recipeIDNum;
-						request(callback, { 'headers': headers, 'data': JSON.stringify(ingred)}, function(err, response, body){
-								if(!err){
-									res.json({success: true, msg: 'Successfully called back the url.'});
-								}else{
-									res.json({success: false, msg: 'Failed to call back the url.'});
-								}
-							});
+						callback = callback + "/" + recipeIDNum;
+						request.post(callback, { 'headers': headers, 'body': JSON.stringify(ingred)}, function(eRR,httpResponse,body) {
+									if(eRR) {
+										resp.json({success: false, msg: 'Failed to reach callback url.'});
+									}
+								});
 					} 
 				} else {
 					console.log(response);
@@ -954,20 +1061,18 @@ function todaysWeather(recipeIDNum) {
 					//Headers for callbackURL
 					var headers = {
 						'Content-Type': 'application/json',
-						'nsds-api-key': nsdsApiKey
+						'nsds-api-key': onitAPIKey
 					};
 					
 					//Always sets off trigger
 					console.log(curWeather);
 					console.log("Target hit, calling callback URL...");
-					callback += recipeIDNum;
-					request(callback, { 'headers': headers, 'data': JSON.stringify(ingred)}, function(err, response, body){
-								if(!err){
-									res.json({success: true, msg: 'Successfully called back the url.'});
-								}else{
-									res.json({success: false, msg: 'Failed to call back the url.'});
-								}
-							});
+					callback = callback + "/" + recipeIDNum ;
+					request.post(callback, { 'headers': headers, 'body': JSON.stringify(ingred)}, function(eRR,httpResponse,body) {
+									if(eRR) {
+										resp.json({success: false, msg: 'Failed to reach callback url.'});
+									}
+								});
 				} else {
 					console.log("ERROR:");
 					console.log(response);
@@ -1032,19 +1137,17 @@ function tomWeather(recipeIDNum) {
 					//Headers for callbackURL
 					var headers = {
 						'Content-Type': 'application/json',
-						'nsds-api-key': nsdsApiKey
+						'nsds-api-key': onitAPIKey
 					};
 					//Always sets off trigger
 					console.log(tomWeather);
 					console.log("Target hit, calling callback URL...");
-					callback += recipeIDNum;
-					request(callback, { 'headers': headers, 'data': JSON.stringify(ingred)}, function(err, response, body){
-								if(!err){
-									res.json({success: true, msg: 'Successfully called back the url.'});
-								}else{
-									res.json({success: false, msg: 'Failed to call back the url.'});
-								}
-							});
+					callback = callback + "/" + recipeIDNum ;
+					request.post(callback, { 'headers': headers, 'body': JSON.stringify(ingred)}, function(eRR,httpResponse,body) {
+									if(eRR) {
+										resp.json({success: false, msg: 'Failed to reach callback url.'});
+									}
+								});
 				} else {
 					console.log(response);
 					throw err;
@@ -1109,20 +1212,18 @@ function tomHighTemp(recipeIDNum) {
 					//Headers for callbackURL
 					var headers = {
 						'Content-Type': 'application/json',
-						'nsds-api-key': nsdsApiKey
+						'nsds-api-key': onitAPIKey
 					};
 					console.log("Is tomorrows high temp of "+tomHigh+" greater than "+temp);
 					// If tomorrows High > x than set off trigger
 					if (temp < tomHigh) {
 						console.log("Target hit, calling callback URL...");
-						callback += recipeIDNum;
-						request(callback, { 'headers': headers, 'data': JSON.stringify(ingred)}, function(err, response, body){
-								if(!err){
-									res.json({success: true, msg: 'Successfully called back the url.'});
-								}else{
-									res.json({success: false, msg: 'Failed to call back the url.'});
-								}
-							});
+						callback = callback + "/" + recipeIDNum;
+						request.post(callback, { 'headers': headers, 'body': JSON.stringify(ingred)}, function(eRR,httpResponse,body) {
+									if(eRR) {
+										resp.json({success: false, msg: 'Failed to reach callback url.'});
+									}
+								});
 					}
 				} else {
 					console.log(response);
@@ -1188,20 +1289,18 @@ function tomLowTemp(recipeIDNum) {
 					//Headers for callbackURL
 					var headers = {
 						'Content-Type': 'application/json',
-						'nsds-api-key': nsdsApiKey
+						'nsds-api-key': onitAPIKey
 					};
 					console.log("Is tomorrows low temp of "+tomLow+" less than "+temp);
 					// If tomorrows Low < x than set off trigger
 					if (temp > tomLow) {
 						console.log("Target hit, calling callback URL...");
-						callback += recipeIDNum;
-						request(callback, { 'headers': headers, 'data': JSON.stringify(ingred)}, function(err, response, body){
-								if(!err){
-									res.json({success: true, msg: 'Successfully called back the url.'});
-								}else{
-									res.json({success: false, msg: 'Failed to call back the url.'});
-								}
-							});
+						callback = callback + "/" + recipeIDNum;
+						request.post(callback, { 'headers': headers, 'body': JSON.stringify(ingred)}, function(eRR,httpResponse,body) {
+									if(eRR) {
+										resp.json({success: false, msg: 'Failed to reach callback url.'});
+									}
+								});
 					}
 				} else {
 					console.log(response);
@@ -1268,21 +1367,19 @@ function todayWind(recipeIDNum) {
 					//Headers for callbackURL
 					var headers = {
 						'Content-Type': 'application/json',
-						'nsds-api-key': nsdsApiKey
+						'nsds-api-key': onitAPIKey
 					};
 					//direction is "".maxwind.dir if needed;
 					console.log("Is tomorrows wind speed of "+maxWind+" greater than "+windSpeed);
 					// If tomorrows Low < x than set off trigger
 					if (maxWind > windSpeed) {
 						console.log("Target hit, calling callback URL...");
-						callback += recipeIDNum;
-						request(callback, { 'headers': headers, 'data': JSON.stringify(ingred)}, function(err, response, body){
-								if(!err){
-									res.json({success: true, msg: 'Successfully called back the url.'});
-								}else{
-									res.json({success: false, msg: 'Failed to call back the url.'});
-								}
-							});
+						callback = callback + "/" + recipeIDNum ;
+						request.post(callback, { 'headers': headers, 'body': JSON.stringify(ingred)}, function(eRR,httpResponse,body) {
+									if(eRR) {
+										resp.json({success: false, msg: 'Failed to reach callback url.'});
+									}
+								});
 					}
 				} else {
 					console.log(response);
@@ -1342,20 +1439,18 @@ function todayHumid(recipeIDNum) {
 					//Headers for callbackURL
 					var headers = {
 						'Content-Type': 'application/json',
-						'nsds-api-key': nsdsApiKey
+						'nsds-api-key': onitAPIKey
 					};
 					// If tomorrows Low < x than set off trigger
 					console.log("Is tomorrows humidity of "+maxHumid+" greater than "+humid);
 					if (maxHumid > humid) {
 						console.log("Target hit, calling callback URL...");
-						callback += recipeIDNum;
-						request(callback, { 'headers': headers, 'data': JSON.stringify(ingred)}, function(err, response, body){
-								if(!err){
-									res.json({success: true, msg: 'Successfully called back the url.'});
-								}else{
-									res.json({success: false, msg: 'Failed to call back the url.'});
-								}
-							});
+						callback = callback + "/" + recipeIDNum;
+						request.post(callback, { 'headers': headers, 'body': JSON.stringify(ingred)}, function(eRR,httpResponse,body) {
+									if(eRR) {
+										resp.json({success: false, msg: 'Failed to reach callback url.'});
+									}
+								});
 					}
 				} else {
 					console.log(response);
@@ -1415,20 +1510,18 @@ function todayUV(recipeIDNum) {
 					//Headers for callbackURL
 					var headers = {
 						'Content-Type': 'application/json',
-						'nsds-api-key': nsdsApiKey
+						'nsds-api-key': onitAPIKey
 					};
 					// If tomorrows Low < x than set off trigger
 					console.log("Is tomorrows UV of "+curUV+" greater than "+uv);
 					if (curUV > uv) {
 						console.log("Target hit, calling callback URL...");
-						callback += recipeIDNum;
-						request(callback, { 'headers': headers, 'data': JSON.stringify(ingred)}, function(err, response, body){
-								if(!err){
-									res.json({success: true, msg: 'Successfully called back the url.'});
-								}else{
-									res.json({success: false, msg: 'Failed to call back the url.'});
-								}
-							});
+						callback = callback + "/" + recipeIDNum ;
+						request.post(callback, { 'headers': headers, 'body': JSON.stringify(ingred)}, function(eRR,httpResponse,body) {
+									if(eRR) {
+										resp.json({success: false, msg: 'Failed to reach callback url.'});
+									}
+								});
 					}
 				} else {
 					console.log(response);
@@ -1497,17 +1590,15 @@ function todaySun(recipeIDNum) {
 					//Headers for callbackURL
 					var headers = {
 						'Content-Type': 'application/json',
-						'nsds-api-key': nsdsApiKey
+						'nsds-api-key': onitAPIKey
 					};
 					console.log("Target hit, calling callback URL...");
-					callback += recipeIDNum;
-					request(callback, { 'headers': headers, 'data': JSON.stringify(ingred)}, function(err, response, body){
-								if(!err){
-									res.json({success: true, msg: 'Successfully called back the url.'});
-								}else{
-									res.json({success: false, msg: 'Failed to call back the url.'});
-								}
-							});
+					callback = callback + "/" + recipeIDNum;
+					request.post(callback, { 'headers': headers, 'body': JSON.stringify(ingred)}, function(eRR,httpResponse,body) {
+									if(eRR) {
+										resp.json({success: false, msg: 'Failed to reach callback url.'});
+									}
+								});
 				} else {
 					console.log(response);
 					throw err;

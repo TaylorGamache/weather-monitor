@@ -5,9 +5,9 @@
         "description": "Weather Monitoring Service",
         "version": "1.0.0"
     },
-    "host": "weather-monitor.mybluemix.net",
+    "host": "localhost:3000",
     "schemes": [
-        "https"
+        "http"
     ],
     "basePath": "/api/v1",
     "produces": [
