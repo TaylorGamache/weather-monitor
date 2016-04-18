@@ -38,90 +38,40 @@ recipesDB.find(allDocs ,function(err, result){
 		var idNum = result.docs[i]._id;
 		var relation = result.docs[i].trigger.relation;
 		if (relation == "tempGT" || relation == "tempLT") {
-			// Runs watch for Temperature every 4 hours at the start of the hour
-			//var cronJob = cron.job("0 0 */4 * * *", function(){
-			var cronJob = cron.job("0 */1 * * * *", function(){
-				watchTemperature(idNum);
-			});
-			cronJob.start();
+			watchTemperature(idNum);
+			
 		} else	if (relation == "Alert") {
-			//console.log("in alert")
-			// Runs watch for weather advisories every 1 hour at the start of the hour
-			//var cronJob = cron.job("0 0 */1 * * *", function() {
-			var cronJob = cron.job("0 */1 * * * *", function(){
-				watchAlert(idNum);
-			});
-			cronJob.start();
+			watchAlert(idNum);
+			
 		} else if (relation == "currentWeather") {
-			// Runs watch for weather every 1 hour at the start of the hour
-			//var cronJob = cron.job("0 0 */1 * * *", function() {
-			var cronJob = cron.job("0 */1 * * * *", function(){
-				watchCurWeather(idNum);
-			});
-			cronJob.start();
+			watchCurWeather(idNum);
+			
 		} else if (relation == "weatherChange") {
-			// Runs watch for weather every 1 hour at the start of the hour
-			//var cronJob = cron.job("0 0 */1 * * *", function(){
-			var cronJob = cron.job("0 */1 * * * *", function(){
-				watchWeather(idNum);
-			});
-			cronJob.start();
+			watchWeather(idNum);
+			
 		} else if (relation == "curForecast") {
-			// Runs every day at 4 am
-			//var cronJob = cron.job("0 0 4 */1 * *", function(){
-			var cronJob = cron.job("0 */1 * * * *", function(){
-				todaysWeather(idNum);
-			});
-			cronJob.start();
+			todaysWeather(idNum);
+			
 		} else if (relation == "tomForecast") {
-			// Runs every day at noon
-			//var cronJob = cron.job("0 0 12 */1 * *", function(){
-			var cronJob = cron.job("0 */1 * * * *", function(){
-				tomWeather(idNum);
-			});
-			cronJob.start();
+			tomWeather(idNum);
+			
 		} else if (relation == "tomHtemp") {
-			// Runs every day at noon
-			//var cronJob = cron.job("0 0 12 */1 * *", function(){
-			var cronJob = cron.job("0 */1 * * * *", function(){
-				tomHighTemp(idNum);
-			});
-			cronJob.start();
+			tomHighTemp(idNum);
+
 		} else if (relation == "tomLtemp") {
-			// Runs every day at noon
-			//var cronJob = cron.job("0 0 12 */1 * *", function(){
-			var cronJob = cron.job("0 */1 * * * *", function(){
-				tomLowTemp(idNum);
-			});
-			cronJob.start();
+			tomLowTemp(idNum);
+			
 		} else if (relation == "todHumid") {
-			// Runs every day at 5 am
-			//var cronJob = cron.job("0 0 5 */1 * *", function(){
-			var cronJob = cron.job("0 */1 * * * *", function(){
-				todayHumid(idNum);
-			});
-			cronJob.start();
+			todayHumid(idNum);
+			
 		} else if (relation == "todWind") {
-			// Runs every day at 5 am
-			//var cronJob = cron.job("0 0 5 */1 * *", function(){
-			var cronJob = cron.job("0 */1 * * * *", function(){
-				todayWind(idNum);
-			});
-			cronJob.start();
+			todayWind(idNum);
+			
 		} else if (relation == "todUV") {
-			// Runs every day at noon
-			//var cronJob = cron.job("0 0 12 */1 * *", function(){
-			var cronJob = cron.job("0 */1 * * * *", function(){
-				todayUV(idNum);
-			});
-			cronJob.start();
+			todayUV(idNum);
+			
 		} else if (relation == "todSunrise" || relation == "todSunset") {
-			// Runs every day at noon
-			//var cronJob = cron.job("0 0 12 */1 * *", function(){
-			var cronJob = cron.job("0 */1 * * * *", function(){
-				todaySun(idNum);
-			});
-			cronJob.start();
+			todaySun(idNum);
 		}
 	}
 	console.log("The Weather Monitor is Up and Running.");
@@ -187,12 +137,8 @@ app.post('/api/v1/weather/temperatureGT', function(req, res){
 				var relation = request.trigger.relation;
 				//sets up if recipe is calling for temperature monitoring
 				if (relation == "tempGT") {
-					// Runs watch for Temperature every 4 hours at the start of the hour
-					//var cronJob = cron.job("0 0 */4 * * *", function(){
-					var cronJob = cron.job("0 */1 * * * *", function(){
-						watchTemperature(idNum);
-					});
-					cronJob.start();
+					watchTemperature(idNum);
+					
 				} 					
 			}
 		})
@@ -218,12 +164,7 @@ app.post('/api/v1/weather/temperatureLT', function(req, res){
 				var relation = request.trigger.relation;
 				//sets up if recipe is calling for temperature monitoring
 				if (relation == "tempLT") {
-					// Runs watch for Temperature every 4 hours at the start of the hour
-					//var cronJob = cron.job("0 0 */4 * * *", function(){
-					var cronJob = cron.job("0 */1 * * * *", function(){
-						watchTemperature(idNum);
-					});
-					cronJob.start();
+					watchTemperature(idNum);
 				} 				
 			}
 		})
@@ -248,13 +189,7 @@ app.post('/api/v1/weather/alert', function(req, res){
 				var relation = request.trigger.relation;
 				
 				if (relation == "Alert") {
-					//console.log("in alert")
-					// Runs watch for weather advisories every 1 hour at the start of the hour
-					//var cronJob = cron.job("0 0 */1 * * *", function() {
-					var cronJob = cron.job("0 */1 * * * *", function(){
-						watchAlert(idNum);
-					});
-					cronJob.start();
+					watchAlert(idNum);
 				} 					
 			}
 		})
@@ -282,12 +217,7 @@ app.post('/api/v1/weather/specificWeather', function(req, res){
 				var relation = request.trigger.relation;
 				
 				if (relation == "currentWeather") {
-					// Runs watch for weather every 1 hour at the start of the hour
-					//var cronJob = cron.job("0 0 */1 * * *", function() {
-					var cronJob = cron.job("0 */1 * * * *", function(){
-						watchCurWeather(idNum);
-					});
-					cronJob.start();
+					watchCurWeather(idNum);
 				} 					
 			}
 		})
@@ -312,12 +242,7 @@ app.post('/api/v1/weather/weatherChange', function(req, res){
 				var relation = request.trigger.relation;
 				
 				if (relation == "weatherChange") {
-					// Runs watch for weather every 1 hour at the start of the hour
-					//var cronJob = cron.job("0 0 */1 * * *", function(){
-					var cronJob = cron.job("0 */1 * * * *", function(){
-						watchWeather(idNum);
-					});
-					cronJob.start();
+					watchWeather(idNum);
 				} 					
 			}
 		})
@@ -343,12 +268,7 @@ app.post('/api/v1/weather/currentForecast', function(req, res){
 				var relation = request.trigger.relation;
 				
 				if (relation == "curForecast") {
-					// Runs every day at 4 am
-					//var cronJob = cron.job("0 0 4 */1 * *", function(){
-					var cronJob = cron.job("0 */1 * * * *", function(){
-						todaysWeather(idNum);
-					});
-					cronJob.start();
+					todaysWeather(idNum);
 				} 					
 			}
 		})
@@ -374,12 +294,7 @@ app.post('/api/v1/weather/tomorrowForecast', function(req, res){
 				var relation = request.trigger.relation;
 				
 				if (relation == "tomForecast") {
-					// Runs every day at noon
-					//var cronJob = cron.job("0 0 12 */1 * *", function(){
-					var cronJob = cron.job("0 */1 * * * *", function(){
-						tomWeather(idNum);
-					});
-					cronJob.start();
+					tomWeather(idNum);
 				} 					
 			}
 		})
@@ -405,12 +320,7 @@ app.post('/api/v1/weather/tomorrowHighTemp', function(req, res){
 				var relation = request.trigger.relation;
 				
 				if (relation == "tomHtemp") {
-					// Runs every day at noon
-					//var cronJob = cron.job("0 0 12 */1 * *", function(){
-					var cronJob = cron.job("0 */1 * * * *", function(){
-						tomHighTemp(idNum);
-					});
-					cronJob.start();
+					tomHighTemp(idNum);
 				} 					
 			}
 		})
@@ -436,12 +346,7 @@ app.post('/api/v1/weather/tomorrowLowTemp', function(req, res){
 				var relation = request.trigger.relation;
 				
 				if (relation == "tomLtemp") {
-					// Runs every day at noon
-					//var cronJob = cron.job("0 0 12 */1 * *", function(){
-					var cronJob = cron.job("0 */1 * * * *", function(){
-						tomLowTemp(idNum);
-					});
-					cronJob.start();
+					tomLowTemp(idNum);
 				} 				
 			}
 		})
@@ -465,12 +370,7 @@ app.post('/api/v1/weather/todayHumidity', function(req, res){
 				var relation = request.trigger.relation;
 				
 				if (relation == "todHumid") {
-					// Runs every day at 5 am
-					//var cronJob = cron.job("0 0 5 */1 * *", function(){
-					var cronJob = cron.job("0 */1 * * * *", function(){
-						todayHumid(idNum);
-					});
-					cronJob.start();
+					todayHumid(idNum);
 				} 					
 			}
 		})
@@ -496,12 +396,7 @@ app.post('/api/v1/weather/todayWind', function(req, res){
 				var relation = request.trigger.relation;
 				
 				if (relation == "todWind") {
-					// Runs every day at 5 am
-					//var cronJob = cron.job("0 0 5 */1 * *", function(){
-					var cronJob = cron.job("0 */1 * * * *", function(){
-						todayWind(idNum);
-					});
-					cronJob.start();
+					todayWind(idNum);
 				} 					
 			}
 		})
@@ -525,12 +420,7 @@ app.post('/api/v1/weather/todayUV', function(req, res){
 				var relation = request.trigger.relation;
 				
 				if (relation == "todUV") {
-					// Runs every day at noon
-					//var cronJob = cron.job("0 0 12 */1 * *", function(){
-					var cronJob = cron.job("0 */1 * * * *", function(){
-						todayUV(idNum);
-					});
-					cronJob.start();
+					todayUV(idNum);
 				} 					
 			}
 		})
@@ -554,12 +444,7 @@ app.post('/api/v1/weather/todaySunrise', function(req, res){
 				var relation = request.trigger.relation;
 				
 				if (relation == "todSunrise" ) {
-					// Runs every day at noon
-					//var cronJob = cron.job("0 0 12 */1 * *", function(){
-					var cronJob = cron.job("0 */1 * * * *", function(){
-						todaySun(idNum);
-					});
-					cronJob.start();
+					todaySun(idNum);
 				}					
 			}
 		})
@@ -583,12 +468,7 @@ app.post('/api/v1/weather/todaySunset', function(req, res){
 				var relation = request.trigger.relation;
 				
 				if (relation == "todSunset") {
-					// Runs every day at noon
-					//var cronJob = cron.job("0 0 12 */1 * *", function(){
-					var cronJob = cron.job("0 */1 * * * *", function(){
-						todaySun(idNum);
-					});
-					cronJob.start();
+					todaySun(idNum);
 				}					
 			}
 		})
@@ -606,6 +486,9 @@ WATCH WEATHER FUNCTIONS
 // Takes recipe out of database with database key recipeIDnum
 // Watches for if a temp goes below or above a value
 function watchTemperature(recipeIDNum){
+	// Runs watch for Temperature every 4 hours at the start of the hour
+	//var cronJob = cron.job("0 0 */4 * * *", function(){
+	var cronJob = cron.job("0 */1 * * * *", function(){
 	// gets recipe from database from the key recipeIDNum
 	recipesDB.get(recipeIDNum, function(err, data) {
 		if (err) {
@@ -738,12 +621,17 @@ function watchTemperature(recipeIDNum){
 			});
 		}
 	});
+	});
+	cronJob.start();
 }
 
 // Takes recipe out of database with database key recipeIDnum and sends a get request to
 // api and potentially sets off a trigger
 // Watches for weather alerts
 function watchAlert(recipeIDNum){
+	// Runs watch for weather advisories every 1 hour at the start of the hour
+	//var cronJob = cron.job("0 0 */1 * * *", function() {
+	var cronJob = cron.job("0 */1 * * * *", function(){
 	// gets recipe from database from the key recipeIDNum
 	recipesDB.get(recipeIDNum, function(err, data) {
 		if (err) {
@@ -828,12 +716,17 @@ function watchAlert(recipeIDNum){
 			});
 		}
 	});
+	});
+	cronJob.start();
 }
 
 // Takes recipe out of database with database key recipeIDnum and sends a get request to
 // api and potentially sets off a trigger
 // Watches for a specific weather condition
 function watchCurWeather(recipeIDNum) {
+	// Runs watch for weather every 1 hour at the start of the hour
+	//var cronJob = cron.job("0 0 */1 * * *", function() {
+	var cronJob = cron.job("0 */1 * * * *", function(){
 	// gets recipe from database from the key recipeIDNum
 	recipesDB.get(recipeIDNum, function(err, data) {
 		if (err) {
@@ -929,12 +822,17 @@ function watchCurWeather(recipeIDNum) {
 			});
 		}
 	});
+	});
+	cronJob.start();
 }
 
 // Takes recipe out of database with database key recipeIDnum and sends a get request to
 // api and potentially sets off a trigger
 // Watches for a change in weather
 function watchWeather(recipeIDNum) {
+	// Runs watch for weather every 1 hour at the start of the hour
+	//var cronJob = cron.job("0 0 */1 * * *", function(){
+	var cronJob = cron.job("0 */1 * * * *", function(){
 	// gets recipe from database from the key recipeIDNum
 	recipesDB.get(recipeIDNum, function(err, data) {
 		if (err) {
@@ -1006,12 +904,17 @@ function watchWeather(recipeIDNum) {
 			});
 		}
 	});
+	});
+	cronJob.start();
 }
 
 // Takes recipe out of database with database key recipeIDnum and sends a get request to
 // api and potentially sets off a trigger
 // Gets todays weather forecast
 function todaysWeather(recipeIDNum) {
+	// Runs every day at 4 am
+	//var cronJob = cron.job("0 0 4 */1 * *", function(){
+	var cronJob = cron.job("0 */1 * * * *", function(){
 	// gets recipe from database from the key recipeIDNum
 	recipesDB.get(recipeIDNum, function(err, data) {
 		if (err) {
@@ -1081,12 +984,17 @@ function todaysWeather(recipeIDNum) {
 			});
 		}
 	});
+	});
+	cronJob.start();
 }
 
 // Takes recipe out of database with database key recipeIDnum and sends a get request to
 // api and potentially sets off a trigger
 // Gets tomorrows weather forecast
 function tomWeather(recipeIDNum) {
+	// Runs every day at noon
+	//var cronJob = cron.job("0 0 12 */1 * *", function(){
+	var cronJob = cron.job("0 */1 * * * *", function(){
 	// gets recipe from database from the key recipeIDNum
 	recipesDB.get(recipeIDNum, function(err, data) {
 		if (err) {
@@ -1155,12 +1063,17 @@ function tomWeather(recipeIDNum) {
 			});
 		}
 	});
+	});
+	cronJob.start();
 }
 
 // Takes recipe out of database with database key recipeIDnum and sends a get request to
 // api and potentially sets off a trigger
 // Gets tomorrows high temperature
 function tomHighTemp(recipeIDNum) {
+	// Runs every day at noon
+	//var cronJob = cron.job("0 0 12 */1 * *", function(){
+	var cronJob = cron.job("0 */1 * * * *", function(){
 	// gets recipe from database from the key recipeIDNum
 	recipesDB.get(recipeIDNum, function(err, data) {
 		if (err) {
@@ -1232,12 +1145,17 @@ function tomHighTemp(recipeIDNum) {
 			});
 		}
 	});
+	});
+	cronJob.start();
 }
 
 // Takes recipe out of database with database key recipeIDnum and sends a get request to
 // api and potentially sets off a trigger
 // Gets tomorrows low temperature
 function tomLowTemp(recipeIDNum) {
+	// Runs every day at noon
+	//var cronJob = cron.job("0 0 12 */1 * *", function(){
+	var cronJob = cron.job("0 */1 * * * *", function(){
 	// gets recipe from database from the key recipeIDNum
 	recipesDB.get(recipeIDNum, function(err, data) {
 		if (err) {
@@ -1309,12 +1227,17 @@ function tomLowTemp(recipeIDNum) {
 			});
 		}
 	});
+	});
+	cronJob.start();
 }
 
 // Takes recipe out of database with database key recipeIDnum and sends a get request to
 // api and potentially sets off a trigger
 // Gets todays max wind speed
 function todayWind(recipeIDNum) {
+	// Runs every day at 5 am
+	//var cronJob = cron.job("0 0 5 */1 * *", function(){
+	var cronJob = cron.job("0 */1 * * * *", function(){
 	// gets recipe from database from the key recipeIDNum
 	recipesDB.get(recipeIDNum, function(err, data) {
 		if (err) {
@@ -1387,13 +1310,19 @@ function todayWind(recipeIDNum) {
 				}
 			});
 		}
+	
 	});
+	});
+	cronJob.start();
 }
 
 // Takes recipe out of database with database key recipeIDnum and sends a get request to
 // api and potentially sets off a trigger
 // Gets todays max humidity
 function todayHumid(recipeIDNum) {
+	// Runs every day at 5 am
+	//var cronJob = cron.job("0 0 5 */1 * *", function(){
+	var cronJob = cron.job("0 */1 * * * *", function(){
 	// gets recipe from database from the key recipeIDNum
 	recipesDB.get(recipeIDNum, function(err, data) {
 		if (err) {
@@ -1459,12 +1388,17 @@ function todayHumid(recipeIDNum) {
 			});
 		}
 	});
+	});
+	cronJob.start();
 }
 
 // Takes recipe out of database with database key recipeIDnum and sends a get request to
 // api and potentially sets off a trigger
 // Gets todays max UV
 function todayUV(recipeIDNum) {
+	// Runs every day at 5 am
+	//var cronJob = cron.job("0 0 5 */1 * *", function(){
+	var cronJob = cron.job("0 */1 * * * *", function(){
 	// gets recipe from database from the key recipeIDNum
 	recipesDB.get(recipeIDNum, function(err, data) {
 		if (err) {
@@ -1530,12 +1464,17 @@ function todayUV(recipeIDNum) {
 			});
 		}
 	});
+	});
+	cronJob.start();
 }
 
 // Takes recipe out of database with database key recipeIDnum and sends a get request to
 // api and potentially sets off a trigger
 // Gets todays sunrise or sunset time
 function todaySun(recipeIDNum) {
+	// Runs every day at 5 am
+	//var cronJob = cron.job("0 0 5 */1 * *", function(){
+	var cronJob = cron.job("0 */1 * * * *", function(){
 	// gets recipe from database from the key recipeIDNum
 	recipesDB.get(recipeIDNum, function(err, data) {
 		if (err) {
@@ -1606,6 +1545,8 @@ function todaySun(recipeIDNum) {
 			});
 		}
 	});
+	});
+	cronJob.start();
 }
 
 
