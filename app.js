@@ -5,13 +5,13 @@ var express = require('express');
 var request = require('request');
 var Cloudant = require('cloudant');
 var Config = require('config-js');
+const fs = require('fs');
 var json = require('json');
 var config = new Config('./weather_config.js');
 var me = config.get('CLOUDANT_USERNAME');
 var password = config.get('CLOUDANT_PW');
 var weatherAPIKey = config.get('API_KEY');
 var onitAPIKey = config.get('nsdsApiKey');
-var triggerCallback = "http://nsds-api-stage.mybluemix.net/api/v1/trigger/";
 var cron = require('cron');
 
 var app = express();
@@ -80,9 +80,6 @@ recipesDB.find(allDocs ,function(err, result){
 //temp
 app.post('/temp/:recipeid', function(req, res){
 	console.log("Callback has been reached.");
-	var rec_ID = req.params.recipeid;
-	console.log(rec_ID);
-	console.log(req.headers);
 	console.log(req.body);
 });
 /***************
@@ -492,7 +489,9 @@ function watchTemperature(recipeIDNum){
 	// gets recipe from database from the key recipeIDNum
 	recipesDB.get(recipeIDNum, function(err, data) {
 		if (err) {
-			throw err;
+			fs.appendFile('errorLog.txt', err, function (err) {
+
+			});
 		} else {
 			// gets all of the variables from DB data
 			var targetTemp = data.trigger.watchNum;
@@ -504,12 +503,6 @@ function watchTemperature(recipeIDNum){
 			var type = data.trigger.numSystem;
 			var thresh = data.trigger.inThreshold;
 			var currentTemp;
-	
-			// validates relation
-			if(relation != "tempLT" && relation != "tempGT" && relation != "EQ"){
-				console.log("invalid comparison signal");
-				return;
-			}
 
 			// Sets ups request from weather api
 			requestURL = "http://api.wunderground.com/api/"
@@ -520,7 +513,11 @@ function watchTemperature(recipeIDNum){
 			// sends the request to the weather api and parses through the response 
 			// for the wanted information and does the comparison
 			request(requestURL, function(err, resp, body){
-				if(!err){
+				if(err){
+					fs.appendFile('errorLog.txt', err, function (err) {
+
+					});
+				} else {
 					// Gets the current temperature from response
 					var parsedbody = JSON.parse(body);
 					if (type == "US") {
@@ -556,14 +553,18 @@ function watchTemperature(recipeIDNum){
 								data.trigger.inThreshold = true;
 								recipesDB.insert(data, recipeIDNum, function(err, body, header){
 									if(err){
-										resp.json({success: false, msg: 'Failed to store recipe in database.'});
+										fs.appendFile('errorLog.txt', err, function (err) {
+
+										});
 									}
 								});
 								// calls callback url
 								callback = callback + "/" + recipeIDNum;
 								request.post(callback, { 'headers': headers, 'body': ingred}, function(eRR,httpResponse,body) {
 									if(eRR) {
-										resp.json({success: false, msg: 'Failed to reach callback url.'});
+										fs.appendFile('errorLog.txt', eRR, function (eRR) {
+
+										});
 									}
 								});
 									
@@ -575,7 +576,9 @@ function watchTemperature(recipeIDNum){
 								data.trigger.inThreshold = false;
 								recipesDB.insert(data, recipeIDNum, function(err, body, header){
 									if(err){
-										resp.json({success: false, msg: 'Failed to store recipe in database.'});
+										fs.appendFile('errorLog.txt', err, function (err) {
+
+										});
 									}
 								});
 							} 
@@ -588,7 +591,9 @@ function watchTemperature(recipeIDNum){
 								data.trigger.inThreshold = true;
 								recipesDB.insert(data, recipeIDNum, function(err, body, header){
 									if(err){
-										resp.json({success: false, msg: 'Failed to store recipe in database.'});
+										fs.appendFile('errorLog.txt', err, function (err) {
+
+										});
 									}
 								});
 								// calls callback url
@@ -596,7 +601,9 @@ function watchTemperature(recipeIDNum){
 								request.post(callback, { 'headers': headers, 'body': ingred}, function(eRR,httpResponse,body) {
 									//console.log(body);
 									if(eRR) {
-										resp.json({success: false, msg: 'Failed to reach callback url.'});
+										fs.appendFile('errorLog.txt', eRR, function (eRR) {
+
+										});
 									}
 								});
 							}
@@ -607,15 +614,14 @@ function watchTemperature(recipeIDNum){
 								data.trigger.inThreshold = false;
 								recipesDB.insert(data, recipeIDNum, function(err, body, header){
 									if(err){
-										resp.json({success: false, msg: 'Failed to store recipe in database.'});
+										fs.appendFile('errorLog.txt', err, function (err) {
+
+										});
 									}
 								});
 							} 
 						}
 					} 
-				}else{
-					console.log(response);
-					throw err;
 				}
 		
 			});
@@ -635,7 +641,9 @@ function watchAlert(recipeIDNum){
 	// gets recipe from database from the key recipeIDNum
 	recipesDB.get(recipeIDNum, function(err, data) {
 		if (err) {
-			throw err;
+			fs.appendFile('errorLog.txt', err, function (err) {
+
+			});
 		} else {
 			// gets all of the variables from DB data
 			var lon = data.trigger.lon;
@@ -644,12 +652,6 @@ function watchAlert(recipeIDNum){
 			var relation = data.trigger.relation;
 			var callback = data.callbackURL;
 			var thresh = data.trigger.prevCond;
-	
-			// validates relation
-			if(relation != "Alert" ){
-				console.log("invalid comparison signal");
-				return;
-			}
 
 			// Sets ups request from weather api
 			requestURL = "http://api.wunderground.com/api/"
@@ -658,8 +660,12 @@ function watchAlert(recipeIDNum){
 
 			// sends the request to the weather api and parses through the response 
 			// for the wanted information and does the comparison
-			request(requestURL, function(err, response, body){
-				if(!err){
+			request(requestURL, function(err, res, body){
+				if(err){
+					fs.appendFile('errorLog.txt', err, function (err) {
+
+					});					
+				} else {
 					// Gets the current alert description from response
 					var parsedbody = JSON.parse(body);
 					var currentAlert = parsedbody.alerts.description;
@@ -685,7 +691,9 @@ function watchAlert(recipeIDNum){
 							data.trigger.prevCond = "none";
 							recipesDB.insert(data, recipeIDNum, function(err, body, header){
 								if(err){
-									res.json({success: false, msg: 'Failed to store recipe in database.'});
+									fs.appendFile('errorLog.txt', err, function (err) {
+
+									});
 								}
 							});
 						}
@@ -696,7 +704,9 @@ function watchAlert(recipeIDNum){
 							data.trigger.prevCond = currentAlert;
 							recipesDB.insert(data, recipeIDNum, function(err, body, header){
 								if(err){
-									res.json({success: false, msg: 'Failed to store recipe in database.'});
+									fs.appendFile('errorLog.txt', err, function (err) {
+
+									});
 								}
 							});
 							// sets off trigger
@@ -704,14 +714,13 @@ function watchAlert(recipeIDNum){
 							callback = callback + "/" + recipeIDNum;
 							request.post(callback, { 'headers': headers, 'body': JSON.stringify(ingred)}, function(eRR,httpResponse,body) {
 									if(eRR) {
-										resp.json({success: false, msg: 'Failed to reach callback url.'});
+										fs.appendFile('errorLog.txt', eRR, function (eRR) {
+
+										});
 									}
 								});
 						}
 					}
-				}else{
-					console.log(response);
-					throw err;
 				}
 			});
 		}
@@ -730,7 +739,9 @@ function watchCurWeather(recipeIDNum) {
 	// gets recipe from database from the key recipeIDNum
 	recipesDB.get(recipeIDNum, function(err, data) {
 		if (err) {
-			throw err;
+			fs.appendFile('errorLog.txt', err, function (err) {
+
+			});
 		} else {
 			// gets all of the variables from DB data
 			var lon = data.trigger.lon;
@@ -740,12 +751,6 @@ function watchCurWeather(recipeIDNum) {
 			var callback = data.callbackURL;
 			var weatherCond = data.trigger.weather;
 			var thresh = data.trigger.inThreshold;
-	
-			// validates relation
-			if(relation != "currentWeather" ){
-				console.log("invalid comparison signal");
-				return;
-			}
 
 			// Sets ups request from weather api
 			requestURL = "http://api.wunderground.com/api/"
@@ -754,8 +759,12 @@ function watchCurWeather(recipeIDNum) {
 
 			// sends the request to the weather api and parses through the response 
 			// for the wanted information and does the comparison
-			request(requestURL, function(err, response, body){
-				if(!err){
+			request(requestURL, function(err, res, body){
+				if (err) {
+					fs.appendFile('errorLog.txt', err, function (err) {
+
+					});
+				} else {
 					// Gets the current alerts from response
 					var parsedbody = JSON.parse(body);
 					var curWeather = parsedbody.current_observation.weather;
@@ -769,7 +778,7 @@ function watchCurWeather(recipeIDNum) {
 							"weather_date": parsedbody.current_observation.observation_time,
 							"weather_current": curWeather
 						}
-					}
+					};
 					//Headers for callbackURL
 					var headers = {
 						'Content-Type': 'application/json',
@@ -794,31 +803,36 @@ function watchCurWeather(recipeIDNum) {
 							data.trigger.inThreshold = true;
 							recipesDB.insert(data, recipeIDNum, function(err, body, header){
 								if(err){
-									res.json({success: false, msg: 'Failed to store recipe in database.'});
+									fs.appendFile('errorLog.txt', err, function (err) {
+
+									});
+								} else {
+									//calls callback url
+									console.log("Target hit, calling callback URL...");
+									callback = callback + "/" + recipeIDNum;
+									request.post(callback, { 'headers': headers, 'body': JSON.stringify(ingred)}, function(eRR,httpResponse,body) {
+										if(eRR) {
+											fs.appendFile('errorLog.txt', eRR, function (eRR) {
+
+											});
+										}
+									});
 								}
 							});
-							//calls callback url
-							console.log("Target hit, calling callback URL...");
-							callback = callback + "/" + recipeIDNum ;
-							request.post(callback, { 'headers': headers, 'body': ingred}, function(eRR,httpResponse,body) {
-									if(eRR) {
-										resp.json({success: false, msg: 'Failed to reach callback url.'});
-									}
-								});
+							
 						}
 					} else if (thresh == true){
 						// changes threshold value to false
 						data.trigger.inThreshold = false;
 						recipesDB.insert(data, recipeIDNum, function(err, body, header){
 							if(err){
-								res.json({success: false, msg: 'Failed to store recipe in database.'});
+								fs.appendFile('errorLog.txt', err, function (err) {
+
+								});
 							}
 						});
 					}
-				} else {
-					console.log(response);
-					throw err;
-				}
+				} 
 			});
 		}
 	});
@@ -836,7 +850,9 @@ function watchWeather(recipeIDNum) {
 	// gets recipe from database from the key recipeIDNum
 	recipesDB.get(recipeIDNum, function(err, data) {
 		if (err) {
-			throw err;
+			fs.appendFile('errorLog.txt', err, function (err) {
+
+			});
 		} else {
 			// gets all of the variables from DB data
 			var lon = data.trigger.lon;
@@ -845,12 +861,6 @@ function watchWeather(recipeIDNum) {
 			var relation = data.trigger.relation;
 			var callback = data.callbackURL;
 			var thresh = data.trigger.prevCond;
-	
-			// validates relation
-			if(relation != "weatherChange" ){
-				console.log("invalid comparison signal");
-				return;
-			}
 
 			// Sets ups request from weather api
 			requestURL = "http://api.wunderground.com/api/"
@@ -859,8 +869,12 @@ function watchWeather(recipeIDNum) {
 
 			// sends the request to the weather api and parses through the response 
 			// for the wanted information and does the comparison
-			request(requestURL, function(err, response, body){
-				if(!err){
+			request(requestURL, function(err, res, body){
+				if(err){
+					fs.appendFile('errorLog.txt', err, function (err) {
+
+					});
+				} else {
 					// Gets the current alerts from response
 					var parsedbody = JSON.parse(body);
 					var curWeather = parsedbody.current_observation.weather;
@@ -886,21 +900,22 @@ function watchWeather(recipeIDNum) {
 						data.trigger.prevCond = curWeather;
 						recipesDB.insert(data, recipeIDNum, function(err, body, header){
 							if(err){
-								res.json({success: false, msg: 'Failed to store recipe in database.'});
+								fs.appendFile('errorLog.txt', err, function (err) {
+
+								});
 							}
 						});
 						console.log("Target hit, calling callback URL...");
 						callback = callback + "/" + recipeIDNum;
 						request.post(callback, { 'headers': headers, 'body': JSON.stringify(ingred)}, function(eRR,httpResponse,body) {
 									if(eRR) {
-										resp.json({success: false, msg: 'Failed to reach callback url.'});
+										fs.appendFile('errorLog.txt', eRR, function (eRR) {
+
+										});
 									}
 								});
 					} 
-				} else {
-					console.log(response);
-					throw err;
-				}
+				} 
 			});
 		}
 	});
@@ -918,7 +933,9 @@ function todaysWeather(recipeIDNum) {
 	// gets recipe from database from the key recipeIDNum
 	recipesDB.get(recipeIDNum, function(err, data) {
 		if (err) {
-			throw err;
+			fs.appendFile('errorLog.txt', err, function (err) {
+
+			});
 		} else {
 			// gets all of the variables from DB data
 			var lon = data.trigger.lon;
@@ -928,12 +945,6 @@ function todaysWeather(recipeIDNum) {
 			var callback = data.callbackURL;
 			var type = data.trigger.numSystem;
 	
-			// validates relation
-			if(relation != "curForecast" ){
-				console.log("invalid comparison signal");
-				return;
-			}
-
 			// Sets ups request from weather api
 			requestURL = "http://api.wunderground.com/api/"
 			requestURL += weatherAPIKey + "/forecast10day/conditions/q/"
@@ -941,8 +952,12 @@ function todaysWeather(recipeIDNum) {
 
 			// sends the request to the weather api and parses through the response 
 			// for the wanted information and does the comparison
-			request(requestURL, function(err, response, body){
-				if(!err){
+			request(requestURL, function(err, res, body){
+				if(err){
+					fs.appendFile('errorLog.txt', err, function (err) {
+
+					});
+				} else {
 					// Gets todays weather forecast
 					var parsedbody = JSON.parse(body);
 					var curWeather;
@@ -973,14 +988,12 @@ function todaysWeather(recipeIDNum) {
 					callback = callback + "/" + recipeIDNum ;
 					request.post(callback, { 'headers': headers, 'body': JSON.stringify(ingred)}, function(eRR,httpResponse,body) {
 									if(eRR) {
-										resp.json({success: false, msg: 'Failed to reach callback url.'});
+										fs.appendFile('errorLog.txt', eRR, function (eRR) {
+
+										});
 									}
 								});
-				} else {
-					console.log("ERROR:");
-					console.log(response);
-					throw err;
-				}
+				} 
 			});
 		}
 	});
@@ -998,7 +1011,9 @@ function tomWeather(recipeIDNum) {
 	// gets recipe from database from the key recipeIDNum
 	recipesDB.get(recipeIDNum, function(err, data) {
 		if (err) {
-			throw err;
+			fs.appendFile('errorLog.txt', err, function (err) {
+
+			});
 		} else {
 			// gets all of the variables from DB data
 			var lon = data.trigger.lon;
@@ -1008,12 +1023,6 @@ function tomWeather(recipeIDNum) {
 			var callback = data.callbackURL;
 			var type = data.trigger.numSystem;
 	
-			// validates relation
-			if(relation != "tomForecast" ){
-				console.log("invalid comparison signal");
-				return;
-			}
-
 			// Sets ups request from weather api
 			requestURL = "http://api.wunderground.com/api/"
 			requestURL += weatherAPIKey + "/forecast10day/conditions/q/"
@@ -1022,8 +1031,12 @@ function tomWeather(recipeIDNum) {
 
 			// sends the request to the weather api and parses through the response 
 			// for the wanted information and does the comparison
-			request(requestURL, function(err, response, body){
-				if(!err){
+			request(requestURL, function(err, res, body){
+				if(err){ 
+					fs.appendFile('errorLog.txt', err, function (err) {
+
+					});
+				} else {
 					// Gets tomorrows weather forecast
 					var parsedbody = JSON.parse(body);
 					var tomWeather;
@@ -1052,14 +1065,13 @@ function tomWeather(recipeIDNum) {
 					console.log("Target hit, calling callback URL...");
 					callback = callback + "/" + recipeIDNum ;
 					request.post(callback, { 'headers': headers, 'body': JSON.stringify(ingred)}, function(eRR,httpResponse,body) {
-									if(eRR) {
-										resp.json({success: false, msg: 'Failed to reach callback url.'});
-									}
-								});
-				} else {
-					console.log(response);
-					throw err;
-				}
+						if(eRR) {
+							fs.appendFile('errorLog.txt', eRR, function (eRR) {
+
+							});
+						}
+					});
+				} 
 			});
 		}
 	});
@@ -1077,7 +1089,9 @@ function tomHighTemp(recipeIDNum) {
 	// gets recipe from database from the key recipeIDNum
 	recipesDB.get(recipeIDNum, function(err, data) {
 		if (err) {
-			throw err;
+			fs.appendFile('errorLog.txt', err, function (err) {
+
+			});
 		} else {
 			// gets all of the variables from DB data
 			var lon = data.trigger.lon;
@@ -1088,12 +1102,6 @@ function tomHighTemp(recipeIDNum) {
 			var temp = data.trigger.watchNum;
 			var type = data.trigger.numSystem;
 	
-			// validates relation
-			if(relation != "tomHtemp" ){
-				console.log("invalid comparison signal");
-				return;
-			}
-
 			// Sets ups request from weather api
 			requestURL = "http://api.wunderground.com/api/"
 			requestURL += weatherAPIKey + "/forecast10day/conditions/q/"
@@ -1102,8 +1110,12 @@ function tomHighTemp(recipeIDNum) {
 
 			// sends the request to the weather api and parses through the response 
 			// for the wanted information and does the comparison
-			request(requestURL, function(err, response, body){
-				if(!err){
+			request(requestURL, function(err, res, body){
+				if(err){
+					fs.appendFile('errorLog.txt', err, function (err) {
+
+					});
+				} else {
 					// Gets tomorrows weather 
 					var parsedbody = JSON.parse(body);
 					var tomHigh;
@@ -1134,14 +1146,13 @@ function tomHighTemp(recipeIDNum) {
 						callback = callback + "/" + recipeIDNum;
 						request.post(callback, { 'headers': headers, 'body': JSON.stringify(ingred)}, function(eRR,httpResponse,body) {
 									if(eRR) {
-										resp.json({success: false, msg: 'Failed to reach callback url.'});
+										fs.appendFile('errorLog.txt', eRR, function (eRR) {
+
+										});
 									}
 								});
 					}
-				} else {
-					console.log(response);
-					throw err;
-				}
+				} 
 			});
 		}
 	});
@@ -1159,7 +1170,9 @@ function tomLowTemp(recipeIDNum) {
 	// gets recipe from database from the key recipeIDNum
 	recipesDB.get(recipeIDNum, function(err, data) {
 		if (err) {
-			throw err;
+			fs.appendFile('errorLog.txt', err, function (err) {
+
+			});
 		} else {
 			// gets all of the variables from DB data
 			var lon = data.trigger.lon;
@@ -1170,12 +1183,6 @@ function tomLowTemp(recipeIDNum) {
 			var temp = data.trigger.watchNum;
 			var type = data.trigger.numSystem;
 	
-			// validates relation
-			if(relation != "tomLtemp" ){
-				console.log("invalid comparison signal");
-				return;
-			}
-
 			// Sets ups request from weather api
 			requestURL = "http://api.wunderground.com/api/"
 			requestURL += weatherAPIKey + "/forecast10day/conditions/q/"
@@ -1184,8 +1191,12 @@ function tomLowTemp(recipeIDNum) {
 
 			// sends the request to the weather api and parses through the response 
 			// for the wanted information and does the comparison
-			request(requestURL, function(err, response, body){
-				if(!err){
+			request(requestURL, function(err, res, body){
+				if(err){
+					fs.appendFile('errorLog.txt', err, function (err) {
+
+					});
+				} else {
 					// Gets tomorrows weather forecast
 					var parsedbody = JSON.parse(body);
 					var tomLow;
@@ -1216,14 +1227,13 @@ function tomLowTemp(recipeIDNum) {
 						callback = callback + "/" + recipeIDNum;
 						request.post(callback, { 'headers': headers, 'body': JSON.stringify(ingred)}, function(eRR,httpResponse,body) {
 									if(eRR) {
-										resp.json({success: false, msg: 'Failed to reach callback url.'});
+										fs.appendFile('errorLog.txt', eRR, function (eRR) {
+
+										});
 									}
 								});
 					}
-				} else {
-					console.log(response);
-					throw err;
-				}
+				} 
 			});
 		}
 	});
@@ -1241,7 +1251,9 @@ function todayWind(recipeIDNum) {
 	// gets recipe from database from the key recipeIDNum
 	recipesDB.get(recipeIDNum, function(err, data) {
 		if (err) {
-			throw err;
+			fs.appendFile('errorLog.txt', err, function (err) {
+
+			});
 		} else {
 			// gets all of the variables from DB data
 			var lon = data.trigger.lon;
@@ -1252,12 +1264,6 @@ function todayWind(recipeIDNum) {
 			var windSpeed = data.trigger.watchNum;
 			var type = data.trigger.numSystem;
 	
-			// validates relation
-			if(relation != "todWind" ){
-				console.log("invalid comparison signal");
-				return;
-			}
-
 			// Sets ups request from weather api
 			requestURL = "http://api.wunderground.com/api/"
 			requestURL += weatherAPIKey + "/forecast10day/conditions/q/"
@@ -1266,8 +1272,12 @@ function todayWind(recipeIDNum) {
 
 			// sends the request to the weather api and parses through the response 
 			// for the wanted information and does the comparison
-			request(requestURL, function(err, response, body){
-				if(!err){
+			request(requestURL, function(err, res, body){
+				if(err){
+					fs.appendFile('errorLog.txt', err, function (err) {
+
+					});
+				} else {
 					// Gets tomorrows weather forecast
 					var parsedbody = JSON.parse(body);
 					var maxWind;
@@ -1300,14 +1310,13 @@ function todayWind(recipeIDNum) {
 						callback = callback + "/" + recipeIDNum ;
 						request.post(callback, { 'headers': headers, 'body': JSON.stringify(ingred)}, function(eRR,httpResponse,body) {
 									if(eRR) {
-										resp.json({success: false, msg: 'Failed to reach callback url.'});
+										fs.appendFile('errorLog.txt', eRR, function (eRR) {
+
+										});
 									}
 								});
 					}
-				} else {
-					console.log(response);
-					throw err;
-				}
+				} 
 			});
 		}
 	
@@ -1326,7 +1335,9 @@ function todayHumid(recipeIDNum) {
 	// gets recipe from database from the key recipeIDNum
 	recipesDB.get(recipeIDNum, function(err, data) {
 		if (err) {
-			throw err;
+			fs.appendFile('errorLog.txt', err, function (err) {
+
+			});
 		} else {
 			// gets all of the variables from DB data
 			var lon = data.trigger.lon;
@@ -1336,12 +1347,6 @@ function todayHumid(recipeIDNum) {
 			var callback = data.callbackURL;
 			var humid = data.trigger.watchNum;
 	
-			// validates relation
-			if(relation != "todHumid" ){
-				console.log("invalid comparison signal");
-				return;
-			}
-
 			// Sets ups request from weather api
 			requestURL = "http://api.wunderground.com/api/"
 			requestURL += weatherAPIKey + "/forecast10day/conditions/q/"
@@ -1350,8 +1355,12 @@ function todayHumid(recipeIDNum) {
 
 			// sends the request to the weather api and parses through the response 
 			// for the wanted information and does the comparison
-			request(requestURL, function(err, response, body){
-				if(!err){
+			request(requestURL, function(err, res, body){
+				if(err){
+					fs.appendFile('errorLog.txt', err, function (err) {
+
+					});
+				} else {
 					// Gets tomorrows weather forecast
 					var parsedbody = JSON.parse(body);
 					var maxHumid = parsedbody.forecast.simpleforecast.forecastday[2].maxhumidity;
@@ -1377,14 +1386,13 @@ function todayHumid(recipeIDNum) {
 						callback = callback + "/" + recipeIDNum;
 						request.post(callback, { 'headers': headers, 'body': JSON.stringify(ingred)}, function(eRR,httpResponse,body) {
 									if(eRR) {
-										resp.json({success: false, msg: 'Failed to reach callback url.'});
+										fs.appendFile('errorLog.txt', eRR, function (eRR) {
+
+										});
 									}
 								});
 					}
-				} else {
-					console.log(response);
-					throw err;
-				}
+				} 
 			});
 		}
 	});
@@ -1402,7 +1410,9 @@ function todayUV(recipeIDNum) {
 	// gets recipe from database from the key recipeIDNum
 	recipesDB.get(recipeIDNum, function(err, data) {
 		if (err) {
-			throw err;
+			fs.appendFile('errorLog.txt', err, function (err) {
+
+			});
 		} else {
 			// gets all of the variables from DB data
 			var lon = data.trigger.lon;
@@ -1411,12 +1421,6 @@ function todayUV(recipeIDNum) {
 			var relation = data.trigger.relation;
 			var callback = data.callbackURL;
 			var uv = data.trigger.watchNum;
-	
-			// validates relation
-			if(relation != "todUV" ){
-				console.log("invalid comparison signal");
-				return;
-			}
 
 			// Sets ups request from weather api
 			requestURL = "http://api.wunderground.com/api/"
@@ -1426,8 +1430,12 @@ function todayUV(recipeIDNum) {
 
 			// sends the request to the weather api and parses through the response 
 			// for the wanted information and does the comparison
-			request(requestURL, function(err, response, body){
-				if(!err){
+			request(requestURL, function(err, res, body){
+				if(err){
+					fs.appendFile('errorLog.txt', err, function (err) {
+
+					});
+				} else {
 					// Gets tomorrows weather forecast
 					var parsedbody = JSON.parse(body);
 					var curUV = parsedbody.current_observation.UV;
@@ -1453,14 +1461,13 @@ function todayUV(recipeIDNum) {
 						callback = callback + "/" + recipeIDNum ;
 						request.post(callback, { 'headers': headers, 'body': JSON.stringify(ingred)}, function(eRR,httpResponse,body) {
 									if(eRR) {
-										resp.json({success: false, msg: 'Failed to reach callback url.'});
+										fs.appendFile('errorLog.txt', eRR, function (eRR) {
+
+										});
 									}
 								});
 					}
-				} else {
-					console.log(response);
-					throw err;
-				}
+				} 
 			});
 		}
 	});
@@ -1478,7 +1485,9 @@ function todaySun(recipeIDNum) {
 	// gets recipe from database from the key recipeIDNum
 	recipesDB.get(recipeIDNum, function(err, data) {
 		if (err) {
-			throw err;
+			fs.appendFile('errorLog.txt', err, function (err) {
+
+			});
 		} else {
 			// gets all of the variables from DB data
 			var lon = data.trigger.lon;
@@ -1486,12 +1495,6 @@ function todaySun(recipeIDNum) {
 			var coord = lon.toString() + "," + lat.toString();
 			var relation = data.trigger.relation;
 			var callback = data.callbackURL;
-	
-			// validates relation
-			if(relation != "todSunrise" && relation != "todSunset"){
-				console.log("invalid comparison signal");
-				return;
-			}
 
 			// Sets ups request from weather api
 			requestURL = "http://api.wunderground.com/api/"
@@ -1501,8 +1504,12 @@ function todaySun(recipeIDNum) {
 			
 			// sends the request to the weather api and parses through the response 
 			// for the wanted information and does the comparison
-			request(requestURL, function(err, response, body){
-				if(!err){
+			request(requestURL, function(err, res, body){
+				if(err){
+					fs.appendFile('errorLog.txt', err, function (err) {
+
+					});
+				} else {
 					// Gets todays sunrise or sunset
 					var parsedbody = JSON.parse(body);
 					var todaySunHour;
@@ -1535,13 +1542,12 @@ function todaySun(recipeIDNum) {
 					callback = callback + "/" + recipeIDNum;
 					request.post(callback, { 'headers': headers, 'body': JSON.stringify(ingred)}, function(eRR,httpResponse,body) {
 									if(eRR) {
-										resp.json({success: false, msg: 'Failed to reach callback url.'});
+										fs.appendFile('errorLog.txt', eRR, function (eRR) {
+
+										});
 									}
 								});
-				} else {
-					console.log(response);
-					throw err;
-				}
+				} 
 			});
 		}
 	});
