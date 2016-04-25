@@ -13,7 +13,6 @@ var password = config.get('CLOUDANT_PW');
 var weatherAPIKey = config.get('API_KEY');
 var onitAPIKey = config.get('nsdsApiKey');
 var cron = require('cron');
-
 var app = express();
 
 var cloudant = Cloudant({account:me, password:password});
@@ -29,8 +28,12 @@ app.use(express.static(__dirname + '/public'));
 		
 var allDocs = {"selector": { "_id": { "$gt": 0}}};
 recipesDB.find(allDocs ,function(err, result){
+	var eMsg;
 	if (err) {
-		throw err;
+		eMsg = "Failed to access the database. \n" + err + "\n"+"\n" ;
+		fs.appendFile('errorLog.txt', eMsg, function (err) {
+
+		});
 	} 
 	console.log('Found %d JSONs at startup.', result.docs.length);
 	for (var i = 0; i < result.docs.length; i++) {
@@ -483,13 +486,15 @@ WATCH WEATHER FUNCTIONS
 // Takes recipe out of database with database key recipeIDnum
 // Watches for if a temp goes below or above a value
 function watchTemperature(recipeIDNum){
+	var eMsg;
 	// Runs watch for Temperature every 4 hours at the start of the hour
 	//var cronJob = cron.job("0 0 */4 * * *", function(){
 	var cronJob = cron.job("0 */1 * * * *", function(){
 	// gets recipe from database from the key recipeIDNum
 	recipesDB.get(recipeIDNum, function(err, data) {
 		if (err) {
-			fs.appendFile('errorLog.txt', err, function (err) {
+			eMsg = "Failed to access the database for recipe _id=" + recipeIDNum + "\n" + err + "\n"+"\n" ;
+			fs.appendFile('errorLog.txt', eMsg, function (err) {
 
 			});
 		} else {
@@ -514,7 +519,8 @@ function watchTemperature(recipeIDNum){
 			// for the wanted information and does the comparison
 			request(requestURL, function(err, resp, body){
 				if(err){
-					fs.appendFile('errorLog.txt', err, function (err) {
+					eMsg = "Failed to reach weather API for recipe _id=" + recipeIDNum + "\n" + err + "\n"+"\n" ;
+					fs.appendFile('errorLog.txt', eMsg, function (err) {
 
 					});
 				} else {
@@ -553,7 +559,8 @@ function watchTemperature(recipeIDNum){
 								data.trigger.inThreshold = true;
 								recipesDB.insert(data, recipeIDNum, function(err, body, header){
 									if(err){
-										fs.appendFile('errorLog.txt', err, function (err) {
+										eMsg = "Failed to update database for recipe _id=" + recipeIDNum + "\n" + err + "\n"+"\n" ;
+										fs.appendFile('errorLog.txt', eMsg, function (err) {
 
 										});
 									}
@@ -562,7 +569,8 @@ function watchTemperature(recipeIDNum){
 								callback = callback + "/" + recipeIDNum;
 								request.post(callback, { 'headers': headers, 'body': ingred}, function(eRR,httpResponse,body) {
 									if(eRR) {
-										fs.appendFile('errorLog.txt', eRR, function (eRR) {
+										eMsg = "Failed to reach callback URL for recipe _id=" + recipeIDNum + "\n" + eRR + "\n"+"\n" ;
+										fs.appendFile('errorLog.txt', eMsg, function (eRR) {
 
 										});
 									}
@@ -576,7 +584,8 @@ function watchTemperature(recipeIDNum){
 								data.trigger.inThreshold = false;
 								recipesDB.insert(data, recipeIDNum, function(err, body, header){
 									if(err){
-										fs.appendFile('errorLog.txt', err, function (err) {
+										eMsg = "Failed to update database for recipe _id=" + recipeIDNum + "\n" + err + "\n"+"\n" ;
+										fs.appendFile('errorLog.txt', eMsg, function (err) {
 
 										});
 									}
@@ -591,7 +600,8 @@ function watchTemperature(recipeIDNum){
 								data.trigger.inThreshold = true;
 								recipesDB.insert(data, recipeIDNum, function(err, body, header){
 									if(err){
-										fs.appendFile('errorLog.txt', err, function (err) {
+										eMsg = "Failed to update database for recipe _id=" + recipeIDNum + "\n" + err + "\n"+"\n" ;
+										fs.appendFile('errorLog.txt', eMsg, function (err) {
 
 										});
 									}
@@ -601,7 +611,8 @@ function watchTemperature(recipeIDNum){
 								request.post(callback, { 'headers': headers, 'body': ingred}, function(eRR,httpResponse,body) {
 									//console.log(body);
 									if(eRR) {
-										fs.appendFile('errorLog.txt', eRR, function (eRR) {
+										eMsg = "Failed to reach callback URL for recipe _id=" + recipeIDNum + "\n" + eRR + "\n"+"\n" ;
+										fs.appendFile('errorLog.txt', eMsg, function (eRR) {
 
 										});
 									}
@@ -614,7 +625,8 @@ function watchTemperature(recipeIDNum){
 								data.trigger.inThreshold = false;
 								recipesDB.insert(data, recipeIDNum, function(err, body, header){
 									if(err){
-										fs.appendFile('errorLog.txt', err, function (err) {
+										eMsg = "Failed to update database for recipe _id=" + recipeIDNum + "\n" + err + "\n"+"\n" ;
+										fs.appendFile('errorLog.txt', eMsg, function (err) {
 
 										});
 									}
@@ -635,13 +647,15 @@ function watchTemperature(recipeIDNum){
 // api and potentially sets off a trigger
 // Watches for weather alerts
 function watchAlert(recipeIDNum){
+	var eMsg;
 	// Runs watch for weather advisories every 1 hour at the start of the hour
 	//var cronJob = cron.job("0 0 */1 * * *", function() {
 	var cronJob = cron.job("0 */1 * * * *", function(){
 	// gets recipe from database from the key recipeIDNum
 	recipesDB.get(recipeIDNum, function(err, data) {
 		if (err) {
-			fs.appendFile('errorLog.txt', err, function (err) {
+			eMsg = "Failed to access the database for recipe _id=" + recipeIDNum + "\n" + err + "\n"+"\n" ;
+			fs.appendFile('errorLog.txt', eMsg, function (err) {
 
 			});
 		} else {
@@ -662,7 +676,8 @@ function watchAlert(recipeIDNum){
 			// for the wanted information and does the comparison
 			request(requestURL, function(err, res, body){
 				if(err){
-					fs.appendFile('errorLog.txt', err, function (err) {
+					eMsg = "Failed to reach weather API for recipe _id=" + recipeIDNum + "\n" + err + "\n"+"\n" ;
+					fs.appendFile('errorLog.txt', eMsg, function (err) {
 
 					});					
 				} else {
@@ -691,7 +706,8 @@ function watchAlert(recipeIDNum){
 							data.trigger.prevCond = "none";
 							recipesDB.insert(data, recipeIDNum, function(err, body, header){
 								if(err){
-									fs.appendFile('errorLog.txt', err, function (err) {
+									eMsg = "Failed to update database for recipe _id=" + recipeIDNum + "\n" + err + "\n"+"\n" ;
+									fs.appendFile('errorLog.txt', eMsg, function (err) {
 
 									});
 								}
@@ -704,7 +720,8 @@ function watchAlert(recipeIDNum){
 							data.trigger.prevCond = currentAlert;
 							recipesDB.insert(data, recipeIDNum, function(err, body, header){
 								if(err){
-									fs.appendFile('errorLog.txt', err, function (err) {
+									eMsg = "Failed to update database for recipe _id=" + recipeIDNum + "\n" + err + "\n"+"\n" ;
+									fs.appendFile('errorLog.txt', eMsg, function (err) {
 
 									});
 								}
@@ -714,7 +731,8 @@ function watchAlert(recipeIDNum){
 							callback = callback + "/" + recipeIDNum;
 							request.post(callback, { 'headers': headers, 'body': JSON.stringify(ingred)}, function(eRR,httpResponse,body) {
 									if(eRR) {
-										fs.appendFile('errorLog.txt', eRR, function (eRR) {
+										eMsg = "Failed to reach callback URL for recipe _id=" + recipeIDNum + "\n" + eRR + "\n"+"\n" ;
+										fs.appendFile('errorLog.txt', eMsg, function (eRR) {
 
 										});
 									}
@@ -733,13 +751,15 @@ function watchAlert(recipeIDNum){
 // api and potentially sets off a trigger
 // Watches for a specific weather condition
 function watchCurWeather(recipeIDNum) {
+	var eMsg;
 	// Runs watch for weather every 1 hour at the start of the hour
 	//var cronJob = cron.job("0 0 */1 * * *", function() {
 	var cronJob = cron.job("0 */1 * * * *", function(){
 	// gets recipe from database from the key recipeIDNum
 	recipesDB.get(recipeIDNum, function(err, data) {
 		if (err) {
-			fs.appendFile('errorLog.txt', err, function (err) {
+			eMsg = "Failed to access the database for recipe _id=" + recipeIDNum + "\n" + err + "\n"+"\n" ;
+			fs.appendFile('errorLog.txt', eMsg, function (err) {
 
 			});
 		} else {
@@ -761,7 +781,8 @@ function watchCurWeather(recipeIDNum) {
 			// for the wanted information and does the comparison
 			request(requestURL, function(err, res, body){
 				if (err) {
-					fs.appendFile('errorLog.txt', err, function (err) {
+					eMsg = "Failed to reach weather API for recipe _id=" + recipeIDNum + "\n" + err + "\n"+"\n" ;
+					fs.appendFile('errorLog.txt', eMsg, function (err) {
 
 					});
 				} else {
@@ -803,7 +824,8 @@ function watchCurWeather(recipeIDNum) {
 							data.trigger.inThreshold = true;
 							recipesDB.insert(data, recipeIDNum, function(err, body, header){
 								if(err){
-									fs.appendFile('errorLog.txt', err, function (err) {
+									eMsg = "Failed to update database for recipe _id=" + recipeIDNum + "\n" + err + "\n"+"\n" ;
+									fs.appendFile('errorLog.txt', eMsg, function (err) {
 
 									});
 								} else {
@@ -812,7 +834,8 @@ function watchCurWeather(recipeIDNum) {
 									callback = callback + "/" + recipeIDNum;
 									request.post(callback, { 'headers': headers, 'body': JSON.stringify(ingred)}, function(eRR,httpResponse,body) {
 										if(eRR) {
-											fs.appendFile('errorLog.txt', eRR, function (eRR) {
+											eMsg = "Failed to reach callback URL for recipe _id=" + recipeIDNum + "\n" + eRR + "\n"+"\n" ;
+											fs.appendFile('errorLog.txt', eMsg, function (eRR) {
 
 											});
 										}
@@ -826,7 +849,8 @@ function watchCurWeather(recipeIDNum) {
 						data.trigger.inThreshold = false;
 						recipesDB.insert(data, recipeIDNum, function(err, body, header){
 							if(err){
-								fs.appendFile('errorLog.txt', err, function (err) {
+								eMsg = "Failed to update database for recipe _id=" + recipeIDNum + "\n" + err + "\n"+"\n" ;
+								fs.appendFile('errorLog.txt', eMsg, function (err) {
 
 								});
 							}
@@ -844,13 +868,15 @@ function watchCurWeather(recipeIDNum) {
 // api and potentially sets off a trigger
 // Watches for a change in weather
 function watchWeather(recipeIDNum) {
+	var eMsg;
 	// Runs watch for weather every 1 hour at the start of the hour
 	//var cronJob = cron.job("0 0 */1 * * *", function(){
 	var cronJob = cron.job("0 */1 * * * *", function(){
 	// gets recipe from database from the key recipeIDNum
 	recipesDB.get(recipeIDNum, function(err, data) {
 		if (err) {
-			fs.appendFile('errorLog.txt', err, function (err) {
+			eMsg = "Failed to access the database for recipe _id=" + recipeIDNum + "\n" + err + "\n"+"\n" ;
+			fs.appendFile('errorLog.txt', eMsg, function (err) {
 
 			});
 		} else {
@@ -871,7 +897,8 @@ function watchWeather(recipeIDNum) {
 			// for the wanted information and does the comparison
 			request(requestURL, function(err, res, body){
 				if(err){
-					fs.appendFile('errorLog.txt', err, function (err) {
+					eMsg = "Failed to reach weather API for recipe _id=" + recipeIDNum + "\n" + err + "\n"+"\n" ;
+					fs.appendFile('errorLog.txt', eMsg, function (err) {
 
 					});
 				} else {
@@ -900,7 +927,8 @@ function watchWeather(recipeIDNum) {
 						data.trigger.prevCond = curWeather;
 						recipesDB.insert(data, recipeIDNum, function(err, body, header){
 							if(err){
-								fs.appendFile('errorLog.txt', err, function (err) {
+								eMsg = "Failed to update database for recipe _id=" + recipeIDNum + "\n" + err + "\n"+"\n" ;
+								fs.appendFile('errorLog.txt', eMsg, function (err) {
 
 								});
 							}
@@ -909,7 +937,8 @@ function watchWeather(recipeIDNum) {
 						callback = callback + "/" + recipeIDNum;
 						request.post(callback, { 'headers': headers, 'body': JSON.stringify(ingred)}, function(eRR,httpResponse,body) {
 									if(eRR) {
-										fs.appendFile('errorLog.txt', eRR, function (eRR) {
+										eMsg = "Failed to reach callback URL for recipe _id=" + recipeIDNum + "\n" + eRR + "\n"+"\n" ;
+										fs.appendFile('errorLog.txt', eMsg, function (eRR) {
 
 										});
 									}
@@ -927,13 +956,15 @@ function watchWeather(recipeIDNum) {
 // api and potentially sets off a trigger
 // Gets todays weather forecast
 function todaysWeather(recipeIDNum) {
+	var eMsg;
 	// Runs every day at 4 am
 	//var cronJob = cron.job("0 0 4 */1 * *", function(){
 	var cronJob = cron.job("0 */1 * * * *", function(){
 	// gets recipe from database from the key recipeIDNum
 	recipesDB.get(recipeIDNum, function(err, data) {
 		if (err) {
-			fs.appendFile('errorLog.txt', err, function (err) {
+			eMsg = "Failed to access the database for recipe _id=" + recipeIDNum + "\n" + err + "\n"+"\n" ;
+			fs.appendFile('errorLog.txt', eMsg, function (err) {
 
 			});
 		} else {
@@ -954,7 +985,8 @@ function todaysWeather(recipeIDNum) {
 			// for the wanted information and does the comparison
 			request(requestURL, function(err, res, body){
 				if(err){
-					fs.appendFile('errorLog.txt', err, function (err) {
+					eMsg = "Failed to reach weather API for recipe _id=" + recipeIDNum + "\n" + err + "\n"+"\n" ;
+					fs.appendFile('errorLog.txt', eMsg, function (err) {
 
 					});
 				} else {
@@ -988,7 +1020,8 @@ function todaysWeather(recipeIDNum) {
 					callback = callback + "/" + recipeIDNum ;
 					request.post(callback, { 'headers': headers, 'body': JSON.stringify(ingred)}, function(eRR,httpResponse,body) {
 									if(eRR) {
-										fs.appendFile('errorLog.txt', eRR, function (eRR) {
+										eMsg = "Failed to reach callback URL for recipe _id=" + recipeIDNum + "\n" + eRR + "\n"+"\n" ;
+										fs.appendFile('errorLog.txt', eMsg, function (eRR) {
 
 										});
 									}
@@ -1005,13 +1038,15 @@ function todaysWeather(recipeIDNum) {
 // api and potentially sets off a trigger
 // Gets tomorrows weather forecast
 function tomWeather(recipeIDNum) {
+	var eMsg;
 	// Runs every day at noon
 	//var cronJob = cron.job("0 0 12 */1 * *", function(){
 	var cronJob = cron.job("0 */1 * * * *", function(){
 	// gets recipe from database from the key recipeIDNum
 	recipesDB.get(recipeIDNum, function(err, data) {
 		if (err) {
-			fs.appendFile('errorLog.txt', err, function (err) {
+			eMsg = "Failed to access the database for recipe _id=" + recipeIDNum + "\n" + err + "\n"+"\n" ;
+			fs.appendFile('errorLog.txt', eMsg, function (err) {
 
 			});
 		} else {
@@ -1033,7 +1068,8 @@ function tomWeather(recipeIDNum) {
 			// for the wanted information and does the comparison
 			request(requestURL, function(err, res, body){
 				if(err){ 
-					fs.appendFile('errorLog.txt', err, function (err) {
+					eMsg = "Failed to reach weather API for recipe _id=" + recipeIDNum + "\n" + err + "\n"+"\n" ;
+					fs.appendFile('errorLog.txt', eMsg, function (err) {
 
 					});
 				} else {
@@ -1066,7 +1102,8 @@ function tomWeather(recipeIDNum) {
 					callback = callback + "/" + recipeIDNum ;
 					request.post(callback, { 'headers': headers, 'body': JSON.stringify(ingred)}, function(eRR,httpResponse,body) {
 						if(eRR) {
-							fs.appendFile('errorLog.txt', eRR, function (eRR) {
+							eMsg = "Failed to reach callback URL for recipe _id=" + recipeIDNum + "\n" + eRR + "\n"+"\n" ;
+							fs.appendFile('errorLog.txt', eMsg, function (eRR) {
 
 							});
 						}
@@ -1083,13 +1120,15 @@ function tomWeather(recipeIDNum) {
 // api and potentially sets off a trigger
 // Gets tomorrows high temperature
 function tomHighTemp(recipeIDNum) {
+	var eMsg;
 	// Runs every day at noon
 	//var cronJob = cron.job("0 0 12 */1 * *", function(){
 	var cronJob = cron.job("0 */1 * * * *", function(){
 	// gets recipe from database from the key recipeIDNum
 	recipesDB.get(recipeIDNum, function(err, data) {
 		if (err) {
-			fs.appendFile('errorLog.txt', err, function (err) {
+			eMsg = "Failed to access the database for recipe _id=" + recipeIDNum + "\n" + err + "\n"+"\n" ;
+			fs.appendFile('errorLog.txt', eMsg, function (err) {
 
 			});
 		} else {
@@ -1112,7 +1151,8 @@ function tomHighTemp(recipeIDNum) {
 			// for the wanted information and does the comparison
 			request(requestURL, function(err, res, body){
 				if(err){
-					fs.appendFile('errorLog.txt', err, function (err) {
+					eMsg = "Failed to reach weather API for recipe _id=" + recipeIDNum + "\n" + err + "\n"+"\n" ;
+					fs.appendFile('errorLog.txt', eMsg, function (err) {
 
 					});
 				} else {
@@ -1146,7 +1186,8 @@ function tomHighTemp(recipeIDNum) {
 						callback = callback + "/" + recipeIDNum;
 						request.post(callback, { 'headers': headers, 'body': JSON.stringify(ingred)}, function(eRR,httpResponse,body) {
 									if(eRR) {
-										fs.appendFile('errorLog.txt', eRR, function (eRR) {
+										eMsg = "Failed to reach callback URL for recipe _id=" + recipeIDNum + "\n" + eRR + "\n"+"\n" ;
+										fs.appendFile('errorLog.txt', eMsg, function (eRR) {
 
 										});
 									}
@@ -1164,13 +1205,15 @@ function tomHighTemp(recipeIDNum) {
 // api and potentially sets off a trigger
 // Gets tomorrows low temperature
 function tomLowTemp(recipeIDNum) {
+	var eMsg;
 	// Runs every day at noon
 	//var cronJob = cron.job("0 0 12 */1 * *", function(){
 	var cronJob = cron.job("0 */1 * * * *", function(){
 	// gets recipe from database from the key recipeIDNum
 	recipesDB.get(recipeIDNum, function(err, data) {
 		if (err) {
-			fs.appendFile('errorLog.txt', err, function (err) {
+			eMsg = "Failed to access the database for recipe _id=" + recipeIDNum + "\n" + err + "\n"+"\n" ;
+			fs.appendFile('errorLog.txt', eMsg, function (err) {
 
 			});
 		} else {
@@ -1193,7 +1236,8 @@ function tomLowTemp(recipeIDNum) {
 			// for the wanted information and does the comparison
 			request(requestURL, function(err, res, body){
 				if(err){
-					fs.appendFile('errorLog.txt', err, function (err) {
+					eMsg = "Failed to reach weather API for recipe _id=" + recipeIDNum + "\n" + err + "\n"+"\n" ;
+					fs.appendFile('errorLog.txt', eMsg, function (err) {
 
 					});
 				} else {
@@ -1227,7 +1271,8 @@ function tomLowTemp(recipeIDNum) {
 						callback = callback + "/" + recipeIDNum;
 						request.post(callback, { 'headers': headers, 'body': JSON.stringify(ingred)}, function(eRR,httpResponse,body) {
 									if(eRR) {
-										fs.appendFile('errorLog.txt', eRR, function (eRR) {
+										eMsg = "Failed to reach callback URL for recipe _id=" + recipeIDNum + "\n" + eRR + "\n"+"\n" ;
+										fs.appendFile('errorLog.txt', eMsg, function (eRR) {
 
 										});
 									}
@@ -1245,13 +1290,15 @@ function tomLowTemp(recipeIDNum) {
 // api and potentially sets off a trigger
 // Gets todays max wind speed
 function todayWind(recipeIDNum) {
+	var eMsg;
 	// Runs every day at 5 am
 	//var cronJob = cron.job("0 0 5 */1 * *", function(){
 	var cronJob = cron.job("0 */1 * * * *", function(){
 	// gets recipe from database from the key recipeIDNum
 	recipesDB.get(recipeIDNum, function(err, data) {
 		if (err) {
-			fs.appendFile('errorLog.txt', err, function (err) {
+			eMsg = "Failed to access the database for recipe _id=" + recipeIDNum + "\n" + err + "\n"+"\n" ;
+			fs.appendFile('errorLog.txt', eMsg, function (err) {
 
 			});
 		} else {
@@ -1274,7 +1321,8 @@ function todayWind(recipeIDNum) {
 			// for the wanted information and does the comparison
 			request(requestURL, function(err, res, body){
 				if(err){
-					fs.appendFile('errorLog.txt', err, function (err) {
+					eMsg = "Failed to reach weather API for recipe _id=" + recipeIDNum + "\n" + err + "\n"+"\n" ;
+					fs.appendFile('errorLog.txt', eMsg, function (err) {
 
 					});
 				} else {
@@ -1310,7 +1358,8 @@ function todayWind(recipeIDNum) {
 						callback = callback + "/" + recipeIDNum ;
 						request.post(callback, { 'headers': headers, 'body': JSON.stringify(ingred)}, function(eRR,httpResponse,body) {
 									if(eRR) {
-										fs.appendFile('errorLog.txt', eRR, function (eRR) {
+										eMsg = "Failed to reach callback URL for recipe _id=" + recipeIDNum + "\n" + eRR + "\n"+"\n" ;
+										fs.appendFile('errorLog.txt', eMsg, function (eRR) {
 
 										});
 									}
@@ -1329,13 +1378,15 @@ function todayWind(recipeIDNum) {
 // api and potentially sets off a trigger
 // Gets todays max humidity
 function todayHumid(recipeIDNum) {
+	var eMsg;
 	// Runs every day at 5 am
 	//var cronJob = cron.job("0 0 5 */1 * *", function(){
 	var cronJob = cron.job("0 */1 * * * *", function(){
 	// gets recipe from database from the key recipeIDNum
 	recipesDB.get(recipeIDNum, function(err, data) {
 		if (err) {
-			fs.appendFile('errorLog.txt', err, function (err) {
+			eMsg = "Failed to access the database for recipe _id=" + recipeIDNum + "\n" + err + "\n"+"\n" ;
+			fs.appendFile('errorLog.txt', eMsg, function (err) {
 
 			});
 		} else {
@@ -1357,7 +1408,8 @@ function todayHumid(recipeIDNum) {
 			// for the wanted information and does the comparison
 			request(requestURL, function(err, res, body){
 				if(err){
-					fs.appendFile('errorLog.txt', err, function (err) {
+					eMsg = "Failed to reach weather API for recipe _id=" + recipeIDNum + "\n" + err + "\n"+"\n" ;
+					fs.appendFile('errorLog.txt', eMsg, function (err) {
 
 					});
 				} else {
@@ -1386,7 +1438,8 @@ function todayHumid(recipeIDNum) {
 						callback = callback + "/" + recipeIDNum;
 						request.post(callback, { 'headers': headers, 'body': JSON.stringify(ingred)}, function(eRR,httpResponse,body) {
 									if(eRR) {
-										fs.appendFile('errorLog.txt', eRR, function (eRR) {
+										eMsg = "Failed to reach callback URL for recipe _id=" + recipeIDNum + "\n" + eRR + "\n"+"\n" ;
+										fs.appendFile('errorLog.txt', eMsg, function (eRR) {
 
 										});
 									}
@@ -1404,13 +1457,15 @@ function todayHumid(recipeIDNum) {
 // api and potentially sets off a trigger
 // Gets todays max UV
 function todayUV(recipeIDNum) {
+	var eMsg;
 	// Runs every day at 5 am
 	//var cronJob = cron.job("0 0 5 */1 * *", function(){
 	var cronJob = cron.job("0 */1 * * * *", function(){
 	// gets recipe from database from the key recipeIDNum
 	recipesDB.get(recipeIDNum, function(err, data) {
 		if (err) {
-			fs.appendFile('errorLog.txt', err, function (err) {
+			eMsg = "Failed to access the database for recipe _id=" + recipeIDNum + "\n" + err + "\n"+"\n" ;
+			fs.appendFile('errorLog.txt', eMsg, function (err) {
 
 			});
 		} else {
@@ -1432,7 +1487,8 @@ function todayUV(recipeIDNum) {
 			// for the wanted information and does the comparison
 			request(requestURL, function(err, res, body){
 				if(err){
-					fs.appendFile('errorLog.txt', err, function (err) {
+					eMsg = "Failed to reach weather API for recipe _id=" + recipeIDNum + "\n" + err + "\n"+"\n" ;
+					fs.appendFile('errorLog.txt', eMsg, function (err) {
 
 					});
 				} else {
@@ -1461,7 +1517,8 @@ function todayUV(recipeIDNum) {
 						callback = callback + "/" + recipeIDNum ;
 						request.post(callback, { 'headers': headers, 'body': JSON.stringify(ingred)}, function(eRR,httpResponse,body) {
 									if(eRR) {
-										fs.appendFile('errorLog.txt', eRR, function (eRR) {
+										eMsg = "Failed to reach callback URL for recipe _id=" + recipeIDNum + "\n" + eRR + "\n"+"\n" ;
+										fs.appendFile('errorLog.txt', eMsg, function (eRR) {
 
 										});
 									}
@@ -1479,13 +1536,15 @@ function todayUV(recipeIDNum) {
 // api and potentially sets off a trigger
 // Gets todays sunrise or sunset time
 function todaySun(recipeIDNum) {
+	var eMsg;
 	// Runs every day at 5 am
 	//var cronJob = cron.job("0 0 5 */1 * *", function(){
 	var cronJob = cron.job("0 */1 * * * *", function(){
 	// gets recipe from database from the key recipeIDNum
 	recipesDB.get(recipeIDNum, function(err, data) {
 		if (err) {
-			fs.appendFile('errorLog.txt', err, function (err) {
+			eMsg = "Failed to access the database for recipe _id=" + recipeIDNum + "\n" + err + "\n"+"\n" ;
+			fs.appendFile('errorLog.txt', eMsg, function (err) {
 
 			});
 		} else {
@@ -1506,7 +1565,8 @@ function todaySun(recipeIDNum) {
 			// for the wanted information and does the comparison
 			request(requestURL, function(err, res, body){
 				if(err){
-					fs.appendFile('errorLog.txt', err, function (err) {
+					eMsg = "Failed to reach weather API for recipe _id=" + recipeIDNum + "\n" + err + "\n"+"\n" ;
+					fs.appendFile('errorLog.txt', eMsg, function (err) {
 
 					});
 				} else {
@@ -1542,7 +1602,8 @@ function todaySun(recipeIDNum) {
 					callback = callback + "/" + recipeIDNum;
 					request.post(callback, { 'headers': headers, 'body': JSON.stringify(ingred)}, function(eRR,httpResponse,body) {
 									if(eRR) {
-										fs.appendFile('errorLog.txt', eRR, function (eRR) {
+										eMsg = "Failed to reach callback URL for recipe _id=" + recipeIDNum + "\n" + eRR + "\n"+"\n" ;
+										fs.appendFile('errorLog.txt', eMsg, function (eRR) {
 
 										});
 									}
