@@ -540,8 +540,7 @@ function watchTemperature(recipeIDNum){
 							"weather_date": parsedbody.current_observation.observation_time,
 							"weather_temperature": currentTemp
 						}
-					}
-					ingred = JSON.stringify(ingred);
+					};
 					//Headers for callbackURL
 					var headers = {
 						'Content-Type': 'application/json',
@@ -565,9 +564,10 @@ function watchTemperature(recipeIDNum){
 										});
 									}
 								});
+								console.log("Target hit, calling callback URL...");
 								// calls callback url
 								callback = callback + "/" + recipeIDNum;
-								request.post(callback, { 'headers': headers, 'body': ingred}, function(eRR,httpResponse,body) {
+								request.post(callback, { 'headers': headers, 'body': JSON.stringify(ingred)}, function(eRR,httpResponse,body) {
 									if(eRR) {
 										eMsg = "Failed to reach callback URL for recipe _id=" + recipeIDNum + "\n" + eRR + "\n"+"\n" ;
 										fs.appendFile('errorLog.txt', eMsg, function (eRR) {
@@ -607,8 +607,9 @@ function watchTemperature(recipeIDNum){
 									}
 								});
 								// calls callback url
+								console.log("Target hit, calling callback URL...");
 								callback = callback + "/" + recipeIDNum;
-								request.post(callback, { 'headers': headers, 'body': ingred}, function(eRR,httpResponse,body) {
+								request.post(callback, { 'headers': headers, 'body': JSON.stringify(ingred)}, function(eRR,httpResponse,body) {
 									//console.log(body);
 									if(eRR) {
 										eMsg = "Failed to reach callback URL for recipe _id=" + recipeIDNum + "\n" + eRR + "\n"+"\n" ;
